@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Exam Monitoring</title>
+    <link rel="stylesheet" href="../shared/css/common.css">
+    <link rel="stylesheet" href="css/teacher.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Teacher Dashboard - Exam Monitoring</h1>
+            <div class="header-controls">
+                <div class="status-info">
+                    <span class="status-item">
+                        <span class="label">Server:</span>
+                        <span id="serverStatus" class="status-disconnected">Disconnected</span>
+                    </span>
+                    <span class="status-item">
+                        <span class="label">Students:</span>
+                        <span id="studentCount">0</span>
+                    </span>
+                    <span class="status-item">
+                        <span class="label">Active Streams:</span>
+                        <span id="activeStreams">0</span>
+                    </span>
+                </div>
+                <div class="control-buttons">
+                    <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+                    <button id="fullscreenBtn" class="btn btn-secondary">Fullscreen</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="teacher-content">
+            <div class="controls-panel">
+                <h3>Monitoring Controls</h3>
+                <div class="control-group">
+                    <label for="gridSize">Grid Layout:</label>
+                    <select id="gridSize">
+                        <option value="2x2">2x2 (4 students)</option>
+                        <option value="2x3">2x3 (6 students)</option>
+                        <option value="2x4">2x4 (8 students)</option>
+                        <option value="2x5" selected>2x5 (10 students)</option>
+                        <option value="3x4">3x4 (12 students)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="autoRefresh">Auto Refresh:</label>
+                    <input type="checkbox" id="autoRefresh" checked>
+                    <span class="checkbox-label">Every 30s</span>
+                </div>
+                <div class="control-group">
+                    <button id="clearAllBtn" class="btn btn-danger btn-small">Clear All Streams</button>
+                </div>
+            </div>
+
+            <div class="students-grid-container">
+                <div id="studentsGrid" class="students-grid grid-2x5">
+                    <!-- Student video slots will be generated here -->
+                    <div class="student-slot empty" data-slot="1">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">1</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="2">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">2</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="3">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">3</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="4">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">4</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="5">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">5</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="6">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">6</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="7">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">7</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="8">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">8</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="9">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">9</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-slot empty" data-slot="10">
+                        <div class="slot-content">
+                            <div class="empty-message">
+                                <div class="slot-number">10</div>
+                                <div class="waiting-text">Waiting for student...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="activity-panel">
+                <h3>Recent Activity</h3>
+                <div id="activityLog" class="activity-log">
+                    <div class="activity-item">
+                        <span class="timestamp">Ready to monitor students...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../shared/js/utils.js"></script>
+    <script src="js/teacherWebSocket.js"></script>
+    <script src="js/studentGrid.js"></script>
+    <script src="js/teacherApp.js"></script>
+</body>
+</html>
