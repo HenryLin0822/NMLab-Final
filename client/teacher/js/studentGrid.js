@@ -1,4 +1,4 @@
-// Student Grid Manager
+// Enhanced Student Grid Manager with Gaze Tracking
 class StudentGrid {
     constructor() {
         this.gridContainer = document.getElementById('studentsGrid');
@@ -8,6 +8,10 @@ class StudentGrid {
         this.slots = new Map(); // slotNumber -> student socketId
         this.maxSlots = 10;
         this.currentGridSize = '2x5';
+        
+        // Gaze tracking state
+        this.gazeTrackingEnabled = false;
+        this.gazeAlerts = new Map(); // studentId -> alert data
         
         this.setupEventListeners();
         this.initializeGrid();
@@ -34,6 +38,19 @@ class StudentGrid {
         
         document.addEventListener('studentVideoFrame', (event) => {
             this.updateStudentFrame(event.detail);
+        });
+        
+        // NEW: Listen for gaze tracking events
+        document.addEventListener('gazeTrackingStatus', (event) => {
+            this.handleGazeTrackingStatus(event.detail);
+        });
+        
+        document.addEventListener('studentGazeUpdate', (event) => {
+            this.updateStudentGaze(event.detail);
+        });
+        
+        document.addEventListener('gazeAlert', (event) => {
+            this.handleGazeAlert(event.detail);
         });
     }
     
@@ -132,7 +149,9 @@ class StudentGrid {
             slotNumber: null,
             lastFrameTime: null,
             canvas: null,
-            context: null
+            context: null,
+            gazeData: null,
+            gazeHistory: studentInfo.gazeHistory || []
         });
         
         // Find available slot
@@ -155,6 +174,7 @@ class StudentGrid {
         }
         
         this.students.delete(studentInfo.socketId);
+        this.gazeAlerts.delete(studentInfo.studentId);
     }
     
     findAvailableSlot() {
@@ -187,23 +207,63 @@ class StudentGrid {
         student.canvas = canvas;
         student.context = context;
         
-        // Create student info overlay
+        // Create video area (completely clean - no overlays)
+        const videoArea = document.createElement('div');
+        videoArea.className = 'video-area';
+        videoArea.appendChild(canvas);
+        
+        // Create student info overlay (minimal - just for name in corner)
         const overlay = document.createElement('div');
         overlay.className = 'student-info';
         overlay.innerHTML = `
             <div class="student-name">${student.name}</div>
-            <div class="student-status">Connected</div>
-            <div class="connection-indicator"></div>
         `;
+        videoArea.appendChild(overlay);
         
-        // Update slot content
+        // Create info area below video
+        const infoArea = document.createElement('div');
+        infoArea.className = 'info-area';
+        
+        // Add connection status to info area
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'connection-status';
+        statusDiv.innerHTML = `
+            <span class="status-indicator">🟢</span>
+            <span class="status-text">Connected</span>
+        `;
+        infoArea.appendChild(statusDiv);
+        
+        // Create gaze indicator in info area
+        if (this.gazeTrackingEnabled) {
+            const gazeIndicator = document.createElement('div');
+            gazeIndicator.className = 'gaze-indicator';
+            gazeIndicator.innerHTML = `
+                <div class="gaze-direction">👀 Waiting...</div>
+                <div class="gaze-confidence">-</div>
+            `;
+            gazeIndicator.style.display = 'block';
+            infoArea.appendChild(gazeIndicator);
+        }
+        
+        // Create alert area in info area (NOT overlaying video)
+        const alertArea = document.createElement('div');
+        alertArea.className = 'alert-area hidden';
+        alertArea.innerHTML = `
+            <div class="alert-content">
+                <span class="alert-icon">⚠️</span>
+                <span class="alert-message"></span>
+            </div>
+        `;
+        infoArea.appendChild(alertArea);
+        
+        // Update slot content with new structure
         slotElement.className = 'student-slot active';
         slotElement.innerHTML = '';
         
         const slotContent = document.createElement('div');
         slotContent.className = 'slot-content';
-        slotContent.appendChild(canvas);
-        slotContent.appendChild(overlay);
+        slotContent.appendChild(videoArea);
+        slotContent.appendChild(infoArea);
         
         slotElement.appendChild(slotContent);
         
@@ -245,6 +305,134 @@ class StudentGrid {
         };
         
         img.src = frameData.frameData.dataUrl;
+    }
+    
+    // NEW: Handle gaze tracking status
+    handleGazeTrackingStatus(status) {
+        this.gazeTrackingEnabled = status.enabled;
+        Utils.log(`Gaze tracking ${status.enabled ? 'enabled' : 'disabled'}`);
+        
+        // Update UI for all existing students
+        this.students.forEach(student => {
+            if (student.slotNumber) {
+                this.updateGazeIndicatorVisibility(student.slotNumber);
+            }
+        });
+    }
+    
+    // NEW: Update student gaze data
+    updateStudentGaze(gazeData) {
+        const student = this.students.get(gazeData.studentSocketId);
+        if (!student || !student.slotNumber) return;
+        
+        // Store gaze data
+        student.gazeData = gazeData.gazeData;
+        
+        // Update gaze history
+        if (!student.gazeHistory) student.gazeHistory = [];
+        student.gazeHistory.push({
+            timestamp: gazeData.timestamp,
+            direction: gazeData.gazeData.gaze_direction,
+            confidence: gazeData.gazeData.confidence
+        });
+        
+        // Keep only last 10 results
+        if (student.gazeHistory.length > 10) {
+            student.gazeHistory.shift();
+        }
+        
+        // Update gaze indicator in UI
+        this.updateGazeIndicator(student.slotNumber, gazeData.gazeData);
+    }
+    
+    // NEW: Handle gaze alerts
+    handleGazeAlert(alertData) {
+        this.gazeAlerts.set(alertData.studentId, alertData);
+        
+        const student = Array.from(this.students.values())
+            .find(s => s.studentId === alertData.studentId);
+        
+        if (student && student.slotNumber) {
+            this.showGazeAlert(student.slotNumber, alertData.alert);
+        }
+        
+        // Log alert
+        Utils.log(`Gaze alert for ${alertData.studentName}: ${alertData.alert.message}`, 'warn');
+        Utils.showNotification(alertData.alert.message, alertData.alert.severity);
+    }
+    
+    // NEW: Update gaze indicator
+    updateGazeIndicator(slotNumber, gazeData) {
+        if (!this.gazeTrackingEnabled) return;
+        
+        const slotElement = this.gridContainer.querySelector(`[data-slot="${slotNumber}"]`);
+        if (!slotElement) return;
+        
+        const gazeIndicator = slotElement.querySelector('.gaze-indicator');
+        if (!gazeIndicator) return;
+        
+        const directionElement = gazeIndicator.querySelector('.gaze-direction');
+        const confidenceElement = gazeIndicator.querySelector('.gaze-confidence');
+        
+        if (directionElement && confidenceElement) {
+            // Update direction with emoji and text
+            const directionMap = {
+                'left': '👈 Looking Left',
+                'right': '👉 Looking Right', 
+                'center': '👀 Looking Center',
+                'blinking': '😴 Blinking',
+                'unknown': '❓ No Detection',
+                'error': '❌ Error'
+            };
+            
+            directionElement.textContent = directionMap[gazeData.gaze_direction] || '❓ Unknown';
+            
+            // Update confidence
+            const confidence = Math.round((gazeData.confidence || 0) * 100);
+            confidenceElement.textContent = `Confidence: ${confidence}%`;
+            
+            // Add visual styling based on gaze direction
+            gazeIndicator.className = 'gaze-indicator';
+            gazeIndicator.classList.add(`gaze-${gazeData.gaze_direction}`);
+        }
+    }
+    
+    // NEW: Show/hide gaze indicator based on tracking status
+    updateGazeIndicatorVisibility(slotNumber) {
+        const slotElement = this.gridContainer.querySelector(`[data-slot="${slotNumber}"]`);
+        if (!slotElement) return;
+        
+        const gazeIndicator = slotElement.querySelector('.gaze-indicator');
+        if (gazeIndicator) {
+            gazeIndicator.style.display = this.gazeTrackingEnabled ? 'block' : 'none';
+        }
+    }
+    
+    // NEW: Show gaze alert overlay
+    showGazeAlert(slotNumber, alert) {
+        const slotElement = this.gridContainer.querySelector(`[data-slot="${slotNumber}"]`);
+        if (!slotElement) return;
+        
+        const alertOverlay = slotElement.querySelector('.alert-overlay');
+        const alertMessage = slotElement.querySelector('.alert-message');
+        
+        if (alertOverlay && alertMessage) {
+            alertMessage.textContent = alert.message;
+            alertOverlay.className = `alert-overlay ${alert.severity}`;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alertOverlay.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Add alert styling to slot
+        slotElement.classList.add('has-alert', `alert-${alert.severity}`);
+        
+        // Remove alert styling after 10 seconds
+        setTimeout(() => {
+            slotElement.classList.remove('has-alert', `alert-${alert.severity}`);
+        }, 10000);
     }
     
     updateConnectionIndicator(slotNumber, quality) {
@@ -331,16 +519,62 @@ class StudentGrid {
         }, 3000); // Check every 3 seconds
     }
     
+    // NEW: Get gaze statistics for all students
+    getGazeStatistics() {
+        const stats = {
+            totalStudents: this.students.size,
+            studentsWithGazeData: 0,
+            gazeDirections: {
+                center: 0,
+                left: 0,
+                right: 0,
+                blinking: 0,
+                unknown: 0
+            },
+            averageConfidence: 0,
+            activeAlerts: this.gazeAlerts.size
+        };
+        
+        let totalConfidence = 0;
+        let confidenceCount = 0;
+        
+        this.students.forEach(student => {
+            if (student.gazeData) {
+                stats.studentsWithGazeData++;
+                
+                const direction = student.gazeData.gaze_direction;
+                if (stats.gazeDirections.hasOwnProperty(direction)) {
+                    stats.gazeDirections[direction]++;
+                }
+                
+                if (student.gazeData.confidence) {
+                    totalConfidence += student.gazeData.confidence;
+                    confidenceCount++;
+                }
+            }
+        });
+        
+        if (confidenceCount > 0) {
+            stats.averageConfidence = totalConfidence / confidenceCount;
+        }
+        
+        return stats;
+    }
+    
     getGridState() {
         return {
             currentGridSize: this.currentGridSize,
             maxSlots: this.maxSlots,
             studentCount: this.students.size,
             occupiedSlots: this.slots.size,
+            gazeTrackingEnabled: this.gazeTrackingEnabled,
+            gazeAlerts: this.gazeAlerts.size,
             students: Array.from(this.students.values()).map(student => ({
                 name: student.name,
                 slotNumber: student.slotNumber,
-                lastFrameTime: student.lastFrameTime
+                lastFrameTime: student.lastFrameTime,
+                gazeDirection: student.gazeData?.gaze_direction,
+                gazeConfidence: student.gazeData?.confidence
             }))
         };
     }

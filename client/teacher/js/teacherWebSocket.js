@@ -1,4 +1,4 @@
-// Teacher WebSocket Manager
+// Enhanced Teacher WebSocket Manager with Gaze Tracking
 class TeacherWebSocket {
     constructor() {
         this.socket = null;
@@ -39,6 +39,20 @@ class TeacherWebSocket {
             
             // Request current student list
             this.requestStudentList();
+        });
+        
+        // NEW: Handle gaze tracking status from server
+        this.socket.on('gazeTrackingStatus', (status) => {
+            Utils.log(`Gaze tracking status: ${status.enabled ? 'enabled' : 'disabled'}`);
+            
+            // Dispatch event for student grid to handle
+            this.dispatchGazeTrackingStatusEvent(status);
+            
+            // Show notification
+            const message = status.enabled ? 
+                'Gaze tracking enabled' : 
+                'Gaze tracking disabled';
+            Utils.showNotification(message, status.enabled ? 'success' : 'info');
         });
         
         // Receive current student list
@@ -90,6 +104,28 @@ class TeacherWebSocket {
         this.socket.on('studentVideoFrame', (frameData) => {
             // Dispatch frame data to grid manager
             this.dispatchVideoFrameEvent(frameData);
+        });
+        
+        // NEW: Receive gaze analysis results
+        this.socket.on('studentGazeUpdate', (gazeData) => {
+            Utils.log(`Gaze update for ${gazeData.name}: ${gazeData.gazeData.gaze_direction}`);
+            
+            // Dispatch gaze data to grid manager
+            this.dispatchStudentGazeUpdateEvent(gazeData);
+        });
+        
+        // NEW: Receive gaze alerts
+        this.socket.on('gazeAlert', (alertData) => {
+            Utils.log(`Gaze alert for ${alertData.studentName}: ${alertData.alert.message}`, 'warn');
+            
+            // Dispatch alert to grid manager
+            this.dispatchGazeAlertEvent(alertData);
+            
+            // Add to activity log
+            this.addActivity(
+                `⚠️ ${alertData.studentName}: ${alertData.alert.message}`,
+                `gaze-alert ${alertData.alert.severity}`
+            );
         });
         
         // Connection error
@@ -286,6 +322,28 @@ class TeacherWebSocket {
     dispatchActivityEvent(activity) {
         const event = new CustomEvent('activityUpdate', {
             detail: activity
+        });
+        document.dispatchEvent(event);
+    }
+    
+    // NEW: Gaze tracking event dispatchers
+    dispatchGazeTrackingStatusEvent(status) {
+        const event = new CustomEvent('gazeTrackingStatus', {
+            detail: status
+        });
+        document.dispatchEvent(event);
+    }
+    
+    dispatchStudentGazeUpdateEvent(gazeData) {
+        const event = new CustomEvent('studentGazeUpdate', {
+            detail: gazeData
+        });
+        document.dispatchEvent(event);
+    }
+    
+    dispatchGazeAlertEvent(alertData) {
+        const event = new CustomEvent('gazeAlert', {
+            detail: alertData
         });
         document.dispatchEvent(event);
     }
