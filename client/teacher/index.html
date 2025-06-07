@@ -153,6 +153,86 @@
         </main>
     </div>
 
+    <!-- Student Detail View (Initially Hidden) -->
+    <div id="studentDetailView" class="student-detail-view hidden">
+        <div class="detail-header">
+            <button id="backToGridBtn" class="btn btn-secondary">
+                ← Back to Grid
+            </button>
+            <h2 id="detailStudentName">Student Name</h2>
+            <div class="detail-controls">
+                <button id="detailFullscreenBtn" class="btn btn-secondary">Fullscreen</button>
+            </div>
+        </div>
+        
+        <div class="detail-content">
+            <div class="detail-video-section">
+                <div class="detail-video-container">
+                    <canvas id="detailStudentVideo" class="detail-video"></canvas>
+                    <div class="detail-student-info">
+                        <div class="student-name-overlay" id="detailStudentNameOverlay">Student Name</div>
+                        <div class="connection-indicator" id="detailConnectionIndicator"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-info-section">
+                <!-- Connection Status -->
+                <div class="detail-card">
+                    <h3>Connection Status</h3>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="label">Status:</span>
+                            <span id="detailConnectionStatus" class="status-connected">Connected</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Last Frame:</span>
+                            <span id="detailLastFrame">Just now</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gaze Tracking Info -->
+                <div class="detail-card">
+                    <h3>Gaze Tracking</h3>
+                    <div id="detailGazeInfo" class="gaze-detail-info">
+                        <div class="current-gaze">
+                            <div class="gaze-direction-large" id="detailGazeDirection">
+                                👀 Waiting for data...
+                            </div>
+                            <div class="gaze-confidence" id="detailGazeConfidence">
+                                Confidence: -
+                            </div>
+                        </div>
+                        
+                        <div class="gaze-history">
+                            <h4>Recent Activity</h4>
+                            <div id="detailGazeHistory" class="gaze-history-list">
+                                <!-- Gaze history items will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alerts -->
+                <div class="detail-card">
+                    <h3>Alerts</h3>
+                    <div id="detailAlerts" class="alerts-container">
+                        <div class="no-alerts">No active alerts</div>
+                    </div>
+                </div>
+                
+                <!-- Other Students Alerts -->
+                <div class="detail-card">
+                    <h3>Other Students</h3>
+                    <div id="otherStudentsAlerts" class="other-alerts-container">
+                        <div class="no-alerts">No alerts from other students</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="../shared/js/utils.js"></script>

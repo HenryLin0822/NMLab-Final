@@ -1,4 +1,4 @@
-// Enhanced Student Grid Manager with Gaze Tracking
+// Enhanced Student Grid Manager with Gaze Tracking and Detail View
 class StudentGrid {
     constructor() {
         this.gridContainer = document.getElementById('studentsGrid');
@@ -12,6 +12,28 @@ class StudentGrid {
         // Gaze tracking state
         this.gazeTrackingEnabled = false;
         this.gazeAlerts = new Map(); // studentId -> alert data
+        
+        // Detail view references
+        this.detailView = {
+            container: document.getElementById('studentDetailView'),
+            studentName: document.getElementById('detailStudentName'),
+            studentNameOverlay: document.getElementById('detailStudentNameOverlay'),
+            video: document.getElementById('detailStudentVideo'),
+            connectionStatus: document.getElementById('detailConnectionStatus'),
+            connectionIndicator: document.getElementById('detailConnectionIndicator'),
+            lastFrame: document.getElementById('detailLastFrame'),
+            gazeDirection: document.getElementById('detailGazeDirection'),
+            gazeConfidence: document.getElementById('detailGazeConfidence'),
+            gazeHistory: document.getElementById('detailGazeHistory'),
+            alerts: document.getElementById('detailAlerts'),
+            otherStudentsAlerts: document.getElementById('otherStudentsAlerts'),
+            backBtn: document.getElementById('backToGridBtn'),
+            fullscreenBtn: document.getElementById('detailFullscreenBtn')
+        };
+        
+        this.currentDetailStudent = null;
+        this.detailContext = null;
+        this.otherStudentAlerts = new Map(); // Track alerts from other students
         
         this.setupEventListeners();
         this.initializeGrid();
@@ -40,7 +62,7 @@ class StudentGrid {
             this.updateStudentFrame(event.detail);
         });
         
-        // NEW: Listen for gaze tracking events
+        // Gaze tracking events
         document.addEventListener('gazeTrackingStatus', (event) => {
             this.handleGazeTrackingStatus(event.detail);
         });
@@ -51,6 +73,33 @@ class StudentGrid {
         
         document.addEventListener('gazeAlert', (event) => {
             this.handleGazeAlert(event.detail);
+        });
+        
+        // Detail view event listeners
+        if (this.detailView.backBtn) {
+            this.detailView.backBtn.addEventListener('click', () => {
+                this.hideDetailView();
+            });
+        }
+        
+        if (this.detailView.fullscreenBtn) {
+            this.detailView.fullscreenBtn.addEventListener('click', () => {
+                this.toggleDetailFullscreen();
+            });
+        }
+        
+        // Add keyboard handler for escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && this.currentDetailStudent) {
+                this.hideDetailView();
+            }
+        });
+        
+        // Handle fullscreen change for detail view
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && this.detailView.fullscreenBtn) {
+                this.detailView.fullscreenBtn.textContent = 'Fullscreen';
+            }
         });
     }
     
@@ -175,6 +224,11 @@ class StudentGrid {
         
         this.students.delete(studentInfo.socketId);
         this.gazeAlerts.delete(studentInfo.studentId);
+        
+        // If this was the student in detail view, close detail view
+        if (this.currentDetailStudent === studentInfo.socketId) {
+            this.hideDetailView();
+        }
     }
     
     findAvailableSlot() {
@@ -211,6 +265,15 @@ class StudentGrid {
         const videoArea = document.createElement('div');
         videoArea.className = 'video-area';
         videoArea.appendChild(canvas);
+        
+        // Add click handler for detail view
+        videoArea.addEventListener('click', () => {
+            this.showDetailView(studentSocketId);
+        });
+        
+        // Add hover effect
+        videoArea.style.cursor = 'pointer';
+        videoArea.title = `Click to view ${student.name} in detail`;
         
         // Create student info overlay (minimal - just for name in corner)
         const overlay = document.createElement('div');
@@ -293,6 +356,16 @@ class StudentGrid {
                 // Update connection indicator
                 this.updateConnectionIndicator(student.slotNumber, 'good');
                 
+                // If this is the student in detail view, update detail video
+                if (this.currentDetailStudent === frameData.studentSocketId && this.detailContext) {
+                    this.detailView.video.width = frameData.frameData.width;
+                    this.detailView.video.height = frameData.frameData.height;
+                    this.detailContext.drawImage(img, 0, 0);
+                    
+                    // Update detail view connection status
+                    this.updateDetailConnectionStatus(student);
+                }
+                
             } catch (error) {
                 Utils.log(`Error drawing frame for ${student.name}: ${error.message}`, 'error');
                 this.updateConnectionIndicator(student.slotNumber, 'poor');
@@ -307,7 +380,262 @@ class StudentGrid {
         img.src = frameData.frameData.dataUrl;
     }
     
-    // NEW: Handle gaze tracking status
+    // Show student detail view
+    showDetailView(studentSocketId) {
+        const student = this.students.get(studentSocketId);
+        if (!student || !this.detailView.container) {
+            Utils.log('Cannot show detail view: student not found', 'error');
+            return;
+        }
+        
+        this.currentDetailStudent = studentSocketId;
+        
+        // Setup detail video canvas
+        if (!this.detailContext) {
+            this.detailContext = this.detailView.video.getContext('2d');
+        }
+        
+        // Update detail view with student info
+        this.updateDetailViewInfo(student);
+        
+        // Show detail view
+        this.detailView.container.classList.remove('hidden');
+        
+        // Hide main grid
+        document.querySelector('.teacher-content').style.display = 'none';
+        
+        // Dispatch event for activity tracking
+        const event = new CustomEvent('studentDetailViewShown', {
+            detail: { studentName: student.name, studentId: student.studentId }
+        });
+        document.dispatchEvent(event);
+        
+        Utils.log(`Showing detail view for ${student.name}`);
+    }
+    
+    // Hide student detail view
+    hideDetailView() {
+        if (!this.detailView.container) return;
+        
+        // Hide detail view
+        this.detailView.container.classList.add('hidden');
+        
+        // Show main grid
+        document.querySelector('.teacher-content').style.display = 'grid';
+        
+        // Dispatch event for activity tracking
+        const event = new CustomEvent('studentDetailViewHidden', {
+            detail: { timestamp: new Date().toISOString() }
+        });
+        document.dispatchEvent(event);
+        
+        this.currentDetailStudent = null;
+        
+        Utils.log('Detail view hidden');
+    }
+    
+    // Toggle detail view fullscreen
+    toggleDetailFullscreen() {
+        if (!document.fullscreenElement) {
+            if (this.detailView.container.requestFullscreen) {
+                this.detailView.container.requestFullscreen();
+            } else if (this.detailView.container.webkitRequestFullscreen) {
+                this.detailView.container.webkitRequestFullscreen();
+            } else if (this.detailView.container.mozRequestFullScreen) {
+                this.detailView.container.mozRequestFullScreen();
+            }
+            this.detailView.fullscreenBtn.textContent = 'Exit Fullscreen';
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            }
+            this.detailView.fullscreenBtn.textContent = 'Fullscreen';
+        }
+    }
+    
+    // Update detail view with student information
+    updateDetailViewInfo(student) {
+        if (!this.detailView.studentName) return;
+        
+        // Update student name
+        this.detailView.studentName.textContent = student.name;
+        this.detailView.studentNameOverlay.textContent = student.name;
+        
+        // Update connection status
+        this.updateDetailConnectionStatus(student);
+        
+        // Update gaze info
+        this.updateDetailGazeInfo(student);
+        
+        // Update alerts
+        this.updateDetailAlerts(student);
+        
+        // Update other students alerts
+        this.updateOtherStudentsAlerts();
+    }
+    
+    // Update detail view connection status
+    updateDetailConnectionStatus(student) {
+        if (!this.detailView.connectionStatus) return;
+        
+        const now = Date.now();
+        const timeSinceLastFrame = student.lastFrameTime ? 
+            now - student.lastFrameTime.getTime() : Infinity;
+        
+        let status = 'Connected';
+        let statusClass = 'status-connected';
+        let indicatorClass = '';
+        
+        if (timeSinceLastFrame > 10000) {
+            status = 'Poor Connection';
+            statusClass = 'status-disconnected';
+            indicatorClass = 'poor';
+        } else if (timeSinceLastFrame > 5000) {
+            status = 'Weak Connection';
+            statusClass = 'status-connecting';
+            indicatorClass = 'weak';
+        }
+        
+        this.detailView.connectionStatus.textContent = status;
+        this.detailView.connectionStatus.className = statusClass;
+        this.detailView.connectionIndicator.className = `detail-connection-indicator ${indicatorClass}`;
+        
+        // Update last frame time
+        if (student.lastFrameTime) {
+            const timeAgo = Math.round(timeSinceLastFrame / 1000);
+            this.detailView.lastFrame.textContent = timeAgo < 60 ? 
+                `${timeAgo}s ago` : `${Math.round(timeAgo / 60)}m ago`;
+        } else {
+            this.detailView.lastFrame.textContent = 'No data';
+        }
+    }
+    
+    // Update detail view gaze information
+    updateDetailGazeInfo(student) {
+        if (!this.detailView.gazeDirection) return;
+        
+        const currentGaze = this.detailView.gazeDirection.parentElement;
+        
+        if (student.gazeData) {
+            // Update current gaze
+            const directionMap = {
+                'left': '👈 Looking Left',
+                'right': '👉 Looking Right',
+                'center': '👀 Looking at Screen',
+                'blinking': '😴 Blinking',
+                'unknown': '❓ No Detection',
+                'error': '❌ Detection Error'
+            };
+            
+            this.detailView.gazeDirection.textContent = 
+                directionMap[student.gazeData.gaze_direction] || '❓ Unknown';
+            
+            const confidence = Math.round((student.gazeData.confidence || 0) * 100);
+            this.detailView.gazeConfidence.textContent = `Confidence: ${confidence}%`;
+            
+            // Update gaze direction styling
+            currentGaze.className = `current-gaze gaze-${student.gazeData.gaze_direction}`;
+        } else {
+            this.detailView.gazeDirection.textContent = '👀 Waiting for data...';
+            this.detailView.gazeConfidence.textContent = 'Confidence: -';
+            currentGaze.className = 'current-gaze';
+        }
+        
+        // Update gaze history
+        this.updateGazeHistory(student);
+    }
+    
+    // Update gaze history in detail view
+    updateGazeHistory(student) {
+        if (!this.detailView.gazeHistory) return;
+        
+        const history = student.gazeHistory || [];
+        
+        if (history.length === 0) {
+            this.detailView.gazeHistory.innerHTML = '<div class="no-alerts">No gaze data yet</div>';
+            return;
+        }
+        
+        const historyHTML = history.slice(-10).reverse().map(item => {
+            const time = new Date(item.timestamp);
+            const timeStr = Utils.formatTime(time);
+            const direction = item.direction.charAt(0).toUpperCase() + item.direction.slice(1);
+            
+            return `
+                <div class="gaze-history-item">
+                    <span class="gaze-history-direction">${direction}</span>
+                    <span class="gaze-history-time">${timeStr}</span>
+                </div>
+            `;
+        }).join('');
+        
+        this.detailView.gazeHistory.innerHTML = historyHTML;
+    }
+    
+    // Update detail view alerts
+    updateDetailAlerts(student) {
+        if (!this.detailView.alerts) return;
+        
+        const studentId = student.studentId;
+        const alert = this.gazeAlerts.get(studentId);
+        
+        if (!alert) {
+            this.detailView.alerts.innerHTML = '<div class="no-alerts">No active alerts</div>';
+            return;
+        }
+        
+        const alertTime = new Date(alert.timestamp);
+        const timeStr = Utils.formatTime(alertTime);
+        
+        this.detailView.alerts.innerHTML = `
+            <div class="alert-item ${alert.alert.severity}">
+                <div class="alert-message">${alert.alert.message}</div>
+                <div class="alert-time">${timeStr}</div>
+            </div>
+        `;
+    }
+    
+    // Update other students alerts
+    updateOtherStudentsAlerts() {
+        if (!this.detailView.otherStudentsAlerts) return;
+        
+        const otherAlerts = Array.from(this.otherStudentAlerts.values())
+            .filter(alert => {
+                const student = this.students.get(this.currentDetailStudent);
+                return student && alert.studentId !== student.studentId;
+            })
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 5); // Show last 5 alerts
+        
+        if (otherAlerts.length === 0) {
+            this.detailView.otherStudentsAlerts.innerHTML = 
+                '<div class="no-alerts">No alerts from other students</div>';
+            return;
+        }
+        
+        const alertsHTML = otherAlerts.map(alert => {
+            const time = new Date(alert.timestamp);
+            const timeStr = Utils.formatTime(time);
+            
+            return `
+                <div class="other-student-alert ${alert.alert.severity}">
+                    <div class="other-alert-content">
+                        <div class="other-alert-student">${alert.studentName}</div>
+                        <div class="other-alert-message">${alert.alert.message}</div>
+                    </div>
+                    <div class="other-alert-time">${timeStr}</div>
+                </div>
+            `;
+        }).join('');
+        
+        this.detailView.otherStudentsAlerts.innerHTML = alertsHTML;
+    }
+    
+    // Handle gaze tracking status
     handleGazeTrackingStatus(status) {
         this.gazeTrackingEnabled = status.enabled;
         Utils.log(`Gaze tracking ${status.enabled ? 'enabled' : 'disabled'}`);
@@ -320,7 +648,7 @@ class StudentGrid {
         });
     }
     
-    // NEW: Update student gaze data
+    // Update student gaze data
     updateStudentGaze(gazeData) {
         const student = this.students.get(gazeData.studentSocketId);
         if (!student || !student.slotNumber) return;
@@ -341,13 +669,30 @@ class StudentGrid {
             student.gazeHistory.shift();
         }
         
-        // Update gaze indicator in UI
+        // Update gaze indicator in grid
         this.updateGazeIndicator(student.slotNumber, gazeData.gazeData);
+        
+        // If this is the student in detail view, update detail gaze info
+        if (this.currentDetailStudent === gazeData.studentSocketId) {
+            this.updateDetailGazeInfo(student);
+        }
     }
     
-    // NEW: Handle gaze alerts
+    // Handle gaze alerts
     handleGazeAlert(alertData) {
         this.gazeAlerts.set(alertData.studentId, alertData);
+        
+        // Store in other students alerts for detail view
+        this.otherStudentAlerts.set(
+            `${alertData.studentId}-${Date.now()}`, 
+            alertData
+        );
+        
+        // Clean old alerts (keep last 20)
+        if (this.otherStudentAlerts.size > 20) {
+            const oldest = Array.from(this.otherStudentAlerts.keys())[0];
+            this.otherStudentAlerts.delete(oldest);
+        }
         
         const student = Array.from(this.students.values())
             .find(s => s.studentId === alertData.studentId);
@@ -356,12 +701,25 @@ class StudentGrid {
             this.showGazeAlert(student.slotNumber, alertData.alert);
         }
         
+        // Update detail view if currently showing any student
+        if (this.currentDetailStudent) {
+            const currentStudent = this.students.get(this.currentDetailStudent);
+            if (currentStudent) {
+                // Update detail alerts if this is the current student
+                if (currentStudent.studentId === alertData.studentId) {
+                    this.updateDetailAlerts(currentStudent);
+                }
+                // Always update other students alerts
+                this.updateOtherStudentsAlerts();
+            }
+        }
+        
         // Log alert
         Utils.log(`Gaze alert for ${alertData.studentName}: ${alertData.alert.message}`, 'warn');
         Utils.showNotification(alertData.alert.message, alertData.alert.severity);
     }
     
-    // NEW: Update gaze indicator
+    // Update gaze indicator
     updateGazeIndicator(slotNumber, gazeData) {
         if (!this.gazeTrackingEnabled) return;
         
@@ -397,7 +755,7 @@ class StudentGrid {
         }
     }
     
-    // NEW: Show/hide gaze indicator based on tracking status
+    // Show/hide gaze indicator based on tracking status
     updateGazeIndicatorVisibility(slotNumber) {
         const slotElement = this.gridContainer.querySelector(`[data-slot="${slotNumber}"]`);
         if (!slotElement) return;
@@ -408,7 +766,7 @@ class StudentGrid {
         }
     }
     
-    // NEW: Show gaze alert overlay
+    // Show gaze alert overlay
     showGazeAlert(slotNumber, alert) {
         const slotElement = this.gridContainer.querySelector(`[data-slot="${slotNumber}"]`);
         if (!slotElement) return;
@@ -519,7 +877,7 @@ class StudentGrid {
         }, 3000); // Check every 3 seconds
     }
     
-    // NEW: Get gaze statistics for all students
+    // Get gaze statistics for all students
     getGazeStatistics() {
         const stats = {
             totalStudents: this.students.size,
@@ -569,6 +927,8 @@ class StudentGrid {
             occupiedSlots: this.slots.size,
             gazeTrackingEnabled: this.gazeTrackingEnabled,
             gazeAlerts: this.gazeAlerts.size,
+            detailViewActive: !!this.currentDetailStudent,
+            currentDetailStudent: this.currentDetailStudent,
             students: Array.from(this.students.values()).map(student => ({
                 name: student.name,
                 slotNumber: student.slotNumber,

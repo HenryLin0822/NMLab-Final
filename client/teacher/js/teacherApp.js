@@ -10,6 +10,7 @@ class TeacherApp {
         this.isFullscreen = false;
         this.autoRefreshInterval = null;
         this.maxActivityItems = 50;
+        this.isDetailViewActive = false;
         
         this.initialize();
     }
@@ -33,6 +34,9 @@ class TeacherApp {
         
         // Setup auto refresh if enabled
         this.updateAutoRefresh();
+        
+        // Setup detail view activity tracking
+        this.setupDetailViewActivityTracking();
         
         // Initialize activity log
         this.addActivity('Teacher dashboard initialized', 'info');
@@ -75,6 +79,18 @@ class TeacherApp {
         // Before page unload
         window.addEventListener('beforeunload', () => {
             this.cleanup();
+        });
+    }
+    
+    setupDetailViewActivityTracking() {
+        // Listen for detail view events
+        document.addEventListener('studentDetailViewShown', (event) => {
+            const studentName = event.detail.studentName;
+            this.addActivity(`Viewing ${studentName} in detail`, 'detail-view');
+        });
+        
+        document.addEventListener('studentDetailViewHidden', (event) => {
+            this.addActivity('Returned to grid view', 'detail-view');
         });
     }
     
@@ -191,6 +207,9 @@ class TeacherApp {
             return;
         }
         
+        // Check if detail view is active
+        this.isDetailViewActive = window.studentGrid.currentDetailStudent !== null;
+        
         switch (event.key) {
             case 'r':
             case 'R':
@@ -204,13 +223,30 @@ class TeacherApp {
             case 'F':
                 if (event.ctrlKey || event.metaKey) {
                     event.preventDefault();
-                    this.toggleFullscreen();
+                    // Toggle fullscreen for detail view or main view
+                    if (this.isDetailViewActive) {
+                        window.studentGrid.toggleDetailFullscreen();
+                    } else {
+                        this.toggleFullscreen();
+                    }
                 }
                 break;
                 
             case 'Escape':
-                if (this.isFullscreen) {
+                if (this.isDetailViewActive) {
+                    // Close detail view
+                    window.studentGrid.hideDetailView();
+                } else if (this.isFullscreen) {
                     this.exitFullscreen();
+                }
+                break;
+                
+            case 'b':
+            case 'B':
+                // Back from detail view
+                if (this.isDetailViewActive) {
+                    event.preventDefault();
+                    window.studentGrid.hideDetailView();
                 }
                 break;
                 
@@ -219,7 +255,7 @@ class TeacherApp {
             case '3':
             case '4':
             case '5':
-                if (event.ctrlKey || event.metaKey) {
+                if ((event.ctrlKey || event.metaKey) && !this.isDetailViewActive) {
                     event.preventDefault();
                     this.switchGridLayout(event.key);
                 }
@@ -284,11 +320,18 @@ class TeacherApp {
             },
             grid: {
                 size: gridState.currentGridSize,
-                utilization: Math.round((gridState.occupiedSlots / gridState.maxSlots) * 100)
+                utilization: Math.round((gridState.occupiedSlots / gridState.maxSlots) * 100),
+                detailViewActive: gridState.detailViewActive,
+                currentDetailStudent: gridState.currentDetailStudent
             },
             ui: {
                 fullscreen: this.isFullscreen,
-                autoRefresh: this.autoRefreshCheckbox.checked
+                autoRefresh: this.autoRefreshCheckbox.checked,
+                detailView: this.isDetailViewActive
+            },
+            gaze: {
+                enabled: gridState.gazeTrackingEnabled,
+                alerts: gridState.gazeAlerts
             }
         };
     }
