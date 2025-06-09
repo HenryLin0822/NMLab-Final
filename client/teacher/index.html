@@ -51,8 +51,28 @@
                     <input type="checkbox" id="autoRefresh" checked>
                     <span class="checkbox-label">Every 30s</span>
                 </div>
+                
+                <!-- AI Detection Controls -->
+                <div class="control-group ai-detection-controls">
+                    <label>AI Detection:</label>
+                    <button id="aiDetectionToggle" class="btn btn-secondary ai-detection-btn">
+                        🤖 AI Detection: ON
+                    </button>
+                </div>
+                
                 <div class="control-group">
                     <button id="clearAllBtn" class="btn btn-danger btn-small">Clear All Streams</button>
+                </div>
+                
+                <!-- Export Controls -->
+                <div class="control-group export-controls">
+                    <label>Export Data:</label>
+                    <button id="exportLogBtn" class="btn btn-secondary btn-small" onclick="window.teacherApp.exportActivityLog()">
+                        Export Activity Log
+                    </button>
+                    <button id="exportAIReportBtn" class="btn btn-secondary btn-small" onclick="window.teacherApp.generateAIDetectionReport()">
+                        Export AI Report
+                    </button>
                 </div>
             </div>
 
@@ -143,7 +163,35 @@
             </div>
 
             <div class="activity-panel">
-                <h3>Recent Activity</h3>
+                <h3>System Status & Activity</h3>
+                
+                <!-- AI Detection Statistics Section (ONLY ONE!) -->
+                <div class="ai-stats-section">
+                    <h4>AI Detection Status</h4>
+                    <div id="aiStatsContent" class="ai-stats-content">
+                        <div class="stat-row">
+                            <span class="stat-label">Real Persons:</span>
+                            <span id="aiRealCount" class="stat-value good">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">AI Generated:</span>
+                            <span id="aiFakeCount" class="stat-value danger">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">No Face:</span>
+                            <span id="aiNoFaceCount" class="stat-value warning">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Errors:</span>
+                            <span id="aiErrorCount" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Active Alerts:</span>
+                            <span id="aiActiveAlerts" class="stat-value danger">0</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="activityLog" class="activity-log">
                     <div class="activity-item">
                         <span class="timestamp">Ready to monitor students...</span>
@@ -206,7 +254,11 @@
                         </div>
                         
                         <div class="gaze-history">
+<<<<<<< HEAD
                             <h4>Recent Activity</h4>
+=======
+                            <h4>Recent Gaze Activity</h4>
+>>>>>>> 79b87c5 (add ai detection)
                             <div id="detailGazeHistory" class="gaze-history-list">
                                 <!-- Gaze history items will be populated here -->
                             </div>
@@ -214,9 +266,37 @@
                     </div>
                 </div>
                 
+<<<<<<< HEAD
                 <!-- Alerts -->
                 <div class="detail-card">
                     <h3>Alerts</h3>
+=======
+                <!-- AI Detection Info -->
+                <div class="detail-card">
+                    <h3>AI Detection</h3>
+                    <div id="detailAIInfo" class="ai-detail-info">
+                        <div class="current-ai">
+                            <div class="ai-detection-large" id="detailAIDetection">
+                                🤖 Waiting for data...
+                            </div>
+                            <div class="ai-confidence" id="detailAIConfidence">
+                                Confidence: -
+                            </div>
+                        </div>
+                        
+                        <div class="ai-history">
+                            <h4>Recent AI Detections</h4>
+                            <div id="detailAIHistory" class="ai-history-list">
+                                <!-- AI detection history items will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alerts -->
+                <div class="detail-card">
+                    <h3>Active Alerts</h3>
+>>>>>>> 79b87c5 (add ai detection)
                     <div id="detailAlerts" class="alerts-container">
                         <div class="no-alerts">No active alerts</div>
                     </div>
@@ -224,7 +304,11 @@
                 
                 <!-- Other Students Alerts -->
                 <div class="detail-card">
+<<<<<<< HEAD
                     <h3>Other Students</h3>
+=======
+                    <h3>Other Students Activity</h3>
+>>>>>>> 79b87c5 (add ai detection)
                     <div id="otherStudentsAlerts" class="other-alerts-container">
                         <div class="no-alerts">No alerts from other students</div>
                     </div>
@@ -233,11 +317,127 @@
         </div>
     </div>
 
+<<<<<<< HEAD
+=======
+    <!-- Service Status Indicators -->
+    <div class="service-status-bar">
+        <div class="service-status-item">
+            <span class="service-label">Gaze Tracking:</span>
+            <span id="gazeServiceStatus" class="service-status status-connecting">🟡 Connecting...</span>
+        </div>
+        <div class="service-status-item">
+            <span class="service-label">AI Detection:</span>
+            <span id="aiServiceStatus" class="service-status status-connecting">🟡 Connecting...</span>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Help -->
+    <div id="shortcutsHelp" class="shortcuts-help hidden">
+        <div class="shortcuts-content">
+            <h4>Keyboard Shortcuts</h4>
+            <div class="shortcut-list">
+                <div class="shortcut-item">
+                    <kbd>Ctrl + R</kbd>
+                    <span>Refresh student data</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl + F</kbd>
+                    <span>Toggle fullscreen</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl + A</kbd>
+                    <span>Toggle AI detection</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl + 1-5</kbd>
+                    <span>Switch grid layout</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Esc</kbd>
+                    <span>Exit detail view/fullscreen</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>B</kbd>
+                    <span>Back to grid (in detail view)</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="toggleShortcutsHelp()">Close</button>
+        </div>
+    </div>
+
+    <!-- Help Button -->
+    <button id="helpBtn" class="help-button" onclick="toggleShortcutsHelp()" title="Keyboard Shortcuts">
+        ?
+    </button>
+
+>>>>>>> 79b87c5 (add ai detection)
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="../shared/js/utils.js"></script>
     <script src="js/teacherWebSocket.js"></script>
     <script src="js/studentGrid.js"></script>
     <script src="js/teacherApp.js"></script>
+    
+    <!-- Additional UI Helper Scripts -->
+    <script>
+        // Service status indicator updates
+        function updateServiceStatus() {
+            fetch('/api/services/status')
+                .then(response => response.json())
+                .then(data => {
+                    const gazeStatus = document.getElementById('gazeServiceStatus');
+                    const aiStatus = document.getElementById('aiServiceStatus');
+                    
+                    if (gazeStatus) {
+                        gazeStatus.className = `service-status ${data.gaze_service ? 'status-connected' : 'status-disconnected'}`;
+                        gazeStatus.textContent = data.gaze_service ? '🟢 Connected' : '🔴 Disconnected';
+                    }
+                    
+                    if (aiStatus) {
+                        aiStatus.className = `service-status ${data.ai_detection_service ? 'status-connected' : 'status-disconnected'}`;
+                        aiStatus.textContent = data.ai_detection_service ? '🟢 Connected' : '🔴 Disconnected';
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to check service status:', error);
+                });
+        }
+        
+        // Update service status every 10 seconds
+        setInterval(updateServiceStatus, 10000);
+        
+        // Initial status check
+        setTimeout(updateServiceStatus, 2000);
+        
+        // Shortcuts help toggle
+        function toggleShortcutsHelp() {
+            const helpDiv = document.getElementById('shortcutsHelp');
+            helpDiv.classList.toggle('hidden');
+        }
+        
+        // Hide shortcuts help when clicking outside
+        document.addEventListener('click', function(event) {
+            const helpDiv = document.getElementById('shortcutsHelp');
+            const helpBtn = document.getElementById('helpBtn');
+            
+            if (!helpDiv.contains(event.target) && event.target !== helpBtn) {
+                helpDiv.classList.add('hidden');
+            }
+        });
+        
+        // Show help on F1 key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'F1') {
+                event.preventDefault();
+                toggleShortcutsHelp();
+            }
+        });
+        
+        // Console logging for debugging
+        console.log('🎓 Exam Monitoring System - Teacher Dashboard');
+        console.log('👀 Gaze Tracking: Enabled');
+        console.log('🤖 AI Detection: Enabled');
+        console.log('⌨️  Press F1 for keyboard shortcuts');
+    </script>
 </body>
 </html>

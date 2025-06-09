@@ -1,0 +1,94 @@
+.
+├── .git
+│   ├── HEAD
+│   ├── branches
+│   ├── config
+│   ├── description
+│   ├── hooks
+│   │   ├── applypatch-msg.sample
+│   │   ├── commit-msg.sample
+│   │   ├── fsmonitor-watchman.sample
+│   │   ├── post-update.sample
+│   │   ├── pre-applypatch.sample
+│   │   ├── pre-commit.sample
+│   │   ├── pre-merge-commit.sample
+│   │   ├── pre-push.sample
+│   │   ├── pre-rebase.sample
+│   │   ├── pre-receive.sample
+│   │   ├── prepare-commit-msg.sample
+│   │   ├── push-to-checkout.sample
+│   │   └── update.sample
+│   ├── index
+│   ├── info
+│   │   └── exclude
+│   ├── logs
+│   │   ├── HEAD
+│   │   └── refs
+│   │       ├── heads
+│   │       │   └── main
+│   │       └── remotes
+│   │           └── origin
+│   │               └── HEAD
+│   ├── objects
+│   │   ├── info
+│   │   └── pack
+│   │       ├── pack-1625943eded9abeae9c512a1917e89ff78f5b92e.idx
+│   │       └── pack-1625943eded9abeae9c512a1917e89ff78f5b92e.pack
+│   ├── packed-refs
+│   └── refs
+│       ├── heads
+│       │   └── main
+│       ├── remotes
+│       │   └── origin
+│       │       └── HEAD
+│       └── tags
+├── Outline
+├── Tree
+├── ai_detect_service.py
+├── client
+│   ├── shared
+│   │   ├── css
+│   │   │   └── common.css
+│   │   └── js
+│   │       └── utils.js
+│   ├── student
+│   │   ├── css
+│   │   │   └── student.css
+│   │   ├── index.html
+│   │   └── js
+│   │       ├── studentApp.js
+│   │       └── studentWebSocket.js
+│   └── teacher
+│       ├── css
+│       │   └── teacher.css
+│       ├── index.html
+│       └── js
+│           ├── studentGrid.js
+│           ├── teacherApp.js
+│           └── teacherWebSocket.js
+├── gaze_service.py
+├── gaze_tracking
+│   ├── __init__.py
+│   ├── calibration.py
+│   ├── eye.py
+│   ├── gaze_tracking.py
+│   ├── pupil.py
+│   └── trained_models
+│       └── shape_predictor_68_face_landmarks.dat
+├── haarcascade_frontalface_default.xml
+├── models
+│   ├── __init__.py
+│   └── model_epoch_24.pth
+├── package-lock.json
+├── package.json
+├── project_structure.txt
+├── requirements.txt
+├── server
+│   └── server.js
+└── src
+    ├── __init__.py
+    ├── custom_dataset.py
+    ├── haarcascade_frontalface_default.xml
+    └── model.py
+
+32 directories, 59 files

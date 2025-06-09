@@ -1,7 +1,19 @@
-# Requirements for Gaze Tracking Service
-flask==2.3.3
-flask-cors==4.0.0
+
+
+
+# Existing gaze tracking dependencies
+gaze-tracking==0.0.1
 opencv-python==4.8.1.78
 numpy==1.24.3
-Pillow==10.0.1
-gaze-tracking==0.0.1
+flask==2.3.3
+flask-cors==4.0.0
+
+# AI Detection Service dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+Pillow>=10.0.0
+
+# Common dependencies
+requests==2.31.0
+python-dateutil==2.8.2

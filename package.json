@@ -1,18 +1,31 @@
 {
   "name": "exam-monitoring-system",
-  "version": "1.0.0",
-  "description": "Real-time exam monitoring system for anti-cheating",
+  "version": "2.0.0",
+  "description": "Real-time exam monitoring system with gaze tracking and AI detection for anti-cheating",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "nodemon server/server.js"
+    "dev": "nodemon server/server.js",
+    "start:gaze": "python gaze_service.py",
+    "start:ai": "python ai_detect_service.py",
+    "start:services": "concurrently \"npm run start:gaze\" \"npm run start:ai\"",
+    "start:all": "concurrently \"npm run start:services\" \"npm start\"",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint server/server.js",
+    "build": "echo \"No build process required for this project\"",
+    "postinstall": "echo \"Please install Python dependencies: pip install -r requirements.txt\""
   },
   "keywords": [
     "exam",
     "monitoring",
     "websocket",
     "real-time",
-    "anti-cheating"
+    "anti-cheating",
+    "gaze-tracking",
+    "ai-detection",
+    "computer-vision",
+    "education",
+    "proctoring"
   ],
   "author": "",
   "license": "MIT",
@@ -23,6 +36,37 @@
     "socket.io": "^4.7.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/exam-monitoring-system.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/exam-monitoring-system/issues"
+  },
+  "homepage": "https://github.com/your-username/exam-monitoring-system#readme",
+  "config": {
+    "gaze_service_url": "http://localhost:5000",
+    "ai_detection_service_url": "http://localhost:5001",
+    "server_port": "3000"
+  },
+  "python": {
+    "requirements": "requirements.txt",
+    "services": [
+      "gaze_service.py",
+      "ai_detect_service.py"
+    ]
+  },
+  "systemRequirements": {
+    "python": ">=3.8",
+    "opencv": ">=4.5.0",
+    "pytorch": ">=2.0.0"
   }
 }
