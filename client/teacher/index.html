@@ -52,13 +52,7 @@
                     <span class="checkbox-label">Every 30s</span>
                 </div>
                 
-                <!-- NEW: AI Detection Controls -->
-                <div class="control-group ai-detection-controls">
-                    <label>AI Detection:</label>
-                    <button id="aiDetectionToggle" class="btn btn-secondary ai-detection-btn">
-                        🤖 AI Detection: ON
-                    </button>
-                </div>
+                
                 
                 <div class="control-group">
                     <button id="clearAllBtn" class="btn btn-danger btn-small">Clear All Streams</button>
@@ -165,32 +159,7 @@
             <div class="activity-panel">
                 <h3>System Status & Activity</h3>
                 
-                <!-- NEW: AI Detection Statistics Section -->
-                <div class="ai-stats-section">
-                    <h4>AI Detection Status</h4>
-                    <div id="aiStatsContent" class="ai-stats-content">
-                        <div class="stat-row">
-                            <span class="stat-label">Real Persons:</span>
-                            <span id="aiRealCount" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">AI Generated:</span>
-                            <span id="aiFakeCount" class="stat-value danger">0</span>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">No Face:</span>
-                            <span id="aiNoFaceCount" class="stat-value warning">0</span>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Errors:</span>
-                            <span id="aiErrorCount" class="stat-value">0</span>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Active Alerts:</span>
-                            <span id="aiActiveAlerts" class="stat-value danger">0</span>
-                        </div>
-                    </div>
-                </div>
+                
                 
                 <div id="activityLog" class="activity-log">
                     <div class="activity-item">

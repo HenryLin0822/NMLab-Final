@@ -793,7 +793,7 @@ class ExamMonitoringServer {
             h.direction === 'left' || h.direction === 'right'
         );
         
-        if (lookingAway.length >= 3) {
+        if (lookingAway.length >= 5) {
             this.sendGazeAlert(studentInfo, {
                 type: 'looking_away',
                 message: `${studentInfo.name} has been looking away from screen`,
@@ -804,7 +804,7 @@ class ExamMonitoringServer {
         
         // Alert if student has been blinking excessively
         const blinking = recentHistory.filter(h => h.direction === 'blinking');
-        if (blinking.length >= 4) {
+        if (blinking.length >= 50) {
             this.sendGazeAlert(studentInfo, {
                 type: 'excessive_blinking',
                 message: `${studentInfo.name} may be experiencing fatigue`,

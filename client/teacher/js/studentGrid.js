@@ -963,6 +963,11 @@ class StudentGrid {
         // AI detection state
         this.aiDetectionEnabled = false;
         this.aiDetectionAlerts = new Map(); // studentId -> alert data
+
+        // ===== ALERT THROTTLING - NEW =====
+        this.lastAlertTime = new Map(); // studentId -> timestamp
+        this.alertThrottleInterval = 5000; // 5 seconds in milliseconds
+        // ===== THROTTLING END =====
         
         // Detail view references
         this.detailView = {
@@ -993,7 +998,23 @@ class StudentGrid {
         this.setupEventListeners();
         this.initializeGrid();
     }
-    
+
+    // ===== NEW METHOD: Add throttling check =====
+// ===== NEW METHOD: Check if gaze alert should be throttled =====
+    shouldThrottleGazeAlert(studentId) {
+        const now = Date.now();
+        const lastAlertTime = this.lastGazeAlertTime.get(studentId) || 0;
+        const timeSinceLastAlert = now - lastAlertTime;
+        
+        if (timeSinceLastAlert < this.gazeAlertThrottleInterval) {
+            console.log(`🔇 Throttling gaze alert for student ${studentId} - ${Math.round(timeSinceLastAlert/1000)}s since last alert`);
+            return true; // Should throttle
+        }
+        
+        // Update last alert time for this student
+        this.lastGazeAlertTime.set(studentId, now);
+        return false; // Don't throttle
+    }
     setupEventListeners() {
         // Grid size change
         this.gridSizeSelect.addEventListener('change', (e) => {
@@ -1196,6 +1217,8 @@ class StudentGrid {
         this.students.delete(studentInfo.socketId);
         this.gazeAlerts.delete(studentInfo.studentId);
         this.aiDetectionAlerts.delete(studentInfo.studentId); // NEW: Clear AI detection alerts
+        // Clear gaze alert throttle tracking
+        this.lastGazeAlertTime.delete(studentInfo.studentId);
         
         // If this was the student in detail view, close detail view
         if (this.currentDetailStudent === studentInfo.socketId) {
@@ -1452,6 +1475,11 @@ class StudentGrid {
     
     // Handle gaze alerts
     handleGazeAlert(alertData) {
+
+        // Check if we should throttle this alert
+        if (this.shouldThrottleGazeAlert(alertData.studentId)) {
+            return; // Skip this alert
+        }
         this.gazeAlerts.set(alertData.studentId, alertData);
         
         // Store in other students alerts for detail view
@@ -1533,7 +1561,7 @@ class StudentGrid {
                 'left': '👈 Looking Left',
                 'right': '👉 Looking Right', 
                 'center': '👀 Looking Center',
-                'blinking': '😴 Blinking',
+                'blinking': '👀 Looking Center',
                 'unknown': '❓ No Detection',
                 'error': '❌ Error'
             };

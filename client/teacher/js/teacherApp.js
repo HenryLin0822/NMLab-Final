@@ -502,6 +502,7 @@ class TeacherApp {
     // NEW: Create AI detection control elements
     createAIDetectionControls() {
         // Find controls container or create one
+        /*
         let controlsContainer = document.querySelector('.ai-detection-controls');
         if (!controlsContainer) {
             controlsContainer = document.createElement('div');
@@ -532,10 +533,12 @@ class TeacherApp {
         
         // Create AI detection stats display
         this.createAIDetectionStats();
+        */
     }
     
     // NEW: Create AI detection statistics display
     createAIDetectionStats() {
+        /*
         const activityPanel = document.querySelector('.activity-panel');
         if (!activityPanel) return;
         
@@ -573,17 +576,21 @@ class TeacherApp {
         
         // Start updating AI stats
         this.startAIStatsUpdates();
+        */
+        return;
     }
     
     // NEW: Handle AI detection status changes
     handleAIDetectionStatus(status) {
-        this.aiDetectionEnabled = status.enabled;
         
+        this.aiDetectionEnabled = status.enabled;
+        /*
         if (this.aiDetectionToggle) {
             this.aiDetectionToggle.innerHTML = `🤖 AI Detection: ${status.enabled ? 'ON' : 'OFF'}`;
             this.aiDetectionToggle.classList.toggle('btn-danger', !status.enabled);
             this.aiDetectionToggle.classList.toggle('btn-secondary', status.enabled);
         }
+        */
         
         // Update stats visibility
         const aiStatsSection = document.querySelector('.ai-stats-section');
@@ -592,12 +599,14 @@ class TeacherApp {
         }
         
         this.addActivity(`AI detection ${status.enabled ? 'enabled' : 'disabled'}`, 'info');
+
     }
     
     // NEW: Toggle AI detection (if manual control is implemented)
     toggleAIDetection() {
         // This would require server-side implementation to actually toggle the service
         // For now, just show that it would toggle
+        /*
         const newState = !this.aiDetectionEnabled;
         
         Utils.showNotification(
@@ -606,6 +615,8 @@ class TeacherApp {
         );
         
         this.addActivity(`AI detection toggled ${newState ? 'on' : 'off'}`, 'info');
+        */
+        return;
     }
     
     // NEW: Start AI detection statistics updates
