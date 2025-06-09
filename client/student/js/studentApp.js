@@ -1,19 +1,31 @@
-// Main Student Application
+// Enhanced Student Application with Device Selection Support
 class StudentApp {
     constructor() {
         this.video = document.getElementById('studentVideo');
         this.startCameraBtn = document.getElementById('startCameraBtn');
         this.stopCameraBtn = document.getElementById('stopCameraBtn');
+        this.switchCameraBtn = document.getElementById('switchCameraBtn');
         this.cameraStatus = document.getElementById('cameraStatus');
         this.videoOverlay = document.querySelector('.video-overlay');
+        
+        // NEW: Device selection elements
+        this.deviceSelector = document.getElementById('cameraDeviceSelect');
+        this.refreshDevicesBtn = document.getElementById('refreshDevicesBtn');
+        this.deviceInfo = document.getElementById('deviceInfo');
         
         this.mediaStream = null;
         this.isStreaming = false;
         this.streamingInterval = null;
-        this.frameRate = 10; // 2 frames per second
+        this.frameRate = 10; // frames per second
         
         this.canvas = document.createElement('canvas');
         this.context = this.canvas.getContext('2d');
+        
+        // NEW: Device management properties
+        this.availableDevices = [];
+        this.currentDeviceId = null;
+        this.currentDeviceInfo = null;
+        this.isDeviceSwitching = false;
         
         this.initialize();
     }
@@ -27,23 +39,38 @@ class StudentApp {
             return;
         }
         
+        // Check for enhanced video support
+        if (!support.fullVideoSupport) {
+            Utils.showNotification('Limited camera support detected', 'warning');
+            Utils.log('Device enumeration not supported, using basic camera access', 'warn');
+        }
+        
         // Setup event listeners
         this.setupEventListeners();
         
         // Connect to WebSocket
         window.studentWebSocket.connect();
         
+        // Initialize device selection
+        this.initializeDeviceSelection();
+        
         // Update initial status
         Utils.updateStatus('cameraStatusText', 'Not started');
         Utils.updateStatus('streamingStatus', 'Not streaming');
+        Utils.updateStatus('cameraSourceStatus', 'Not selected');
         
-        Utils.log('Student app initialized');
+        Utils.log('Student app initialized with device selection support');
     }
     
     setupEventListeners() {
         // Camera control buttons
         this.startCameraBtn.addEventListener('click', () => this.startCamera());
         this.stopCameraBtn.addEventListener('click', () => this.stopCamera());
+        this.switchCameraBtn.addEventListener('click', () => this.switchToSelectedDevice());
+        
+        // NEW: Device selection listeners
+        this.deviceSelector.addEventListener('change', () => this.onDeviceSelectionChanged());
+        this.refreshDevicesBtn.addEventListener('click', () => this.refreshDeviceList());
         
         // Listen for student assignment
         document.addEventListener('studentAssigned', (event) => {
@@ -65,13 +92,203 @@ class StudentApp {
         });
     }
     
-    async startCamera() {
+    // NEW: Initialize device selection functionality
+    async initializeDeviceSelection() {
         try {
-            Utils.log('Starting camera...');
-            Utils.showStatusMessage('statusMessage', 'Starting camera...', 'info');
+            Utils.log('Initializing device selection...');
             
-            // Get video constraints
-            const constraints = Utils.getVideoConstraints();
+            // Populate device selector
+            const success = await Utils.populateDeviceSelector('cameraDeviceSelect');
+            
+            if (success) {
+                this.refreshDevicesBtn.disabled = false;
+                Utils.log('Device selection initialized successfully');
+                
+                // Update device info if a device is pre-selected
+                this.updateDeviceInfo();
+            } else {
+                Utils.log('Failed to initialize device selection', 'warn');
+                this.handleDeviceSelectionError();
+            }
+            
+        } catch (error) {
+            Utils.log('Error initializing device selection: ' + error.message, 'error');
+            this.handleDeviceSelectionError();
+        }
+    }
+    
+    // NEW: Handle device selection change
+    onDeviceSelectionChanged() {
+        const selectedDeviceInfo = Utils.getSelectedDeviceInfo('cameraDeviceSelect');
+        
+        if (selectedDeviceInfo) {
+            this.currentDeviceInfo = selectedDeviceInfo;
+            this.updateDeviceInfo();
+            this.updateSwitchButton();
+            
+            Utils.log(`Device selected: ${selectedDeviceInfo.label} (${selectedDeviceInfo.isOBS ? 'OBS' : 'Standard'})`);
+            
+            // Show notification for OBS selection
+            if (selectedDeviceInfo.isOBS) {
+                Utils.showNotification('OBS Virtual Camera selected - Enhanced quality available', 'success');
+            }
+        }
+    }
+    
+    // NEW: Refresh device list
+    async refreshDeviceList() {
+        try {
+            this.refreshDevicesBtn.disabled = true;
+            this.refreshDevicesBtn.textContent = '⟳';
+            
+            Utils.log('Refreshing device list...');
+            
+            const success = await Utils.populateDeviceSelector('cameraDeviceSelect');
+            
+            if (success) {
+                Utils.showNotification('Device list refreshed', 'success');
+                this.updateDeviceInfo();
+            } else {
+                Utils.showNotification('Failed to refresh device list', 'error');
+            }
+            
+        } catch (error) {
+            Utils.log('Error refreshing devices: ' + error.message, 'error');
+            Utils.showNotification('Error refreshing devices', 'error');
+        } finally {
+            this.refreshDevicesBtn.disabled = false;
+            this.refreshDevicesBtn.textContent = '🔄';
+        }
+    }
+    
+    // NEW: Update device information display
+    updateDeviceInfo() {
+        const selectedDeviceInfo = Utils.getSelectedDeviceInfo('cameraDeviceSelect');
+        
+        if (!selectedDeviceInfo || !this.deviceInfo) {
+            return;
+        }
+        
+        const deviceTypeIcon = this.deviceInfo.querySelector('.device-type-icon');
+        const deviceName = this.deviceInfo.querySelector('.device-name');
+        const deviceType = this.deviceInfo.querySelector('.device-type');
+        
+        if (deviceTypeIcon && deviceName && deviceType) {
+            // Update icon and text based on device type
+            if (selectedDeviceInfo.isOBS) {
+                deviceTypeIcon.textContent = '📹';
+                deviceName.textContent = selectedDeviceInfo.label.replace('📹 ', '').replace(' (OBS)', '');
+                deviceType.textContent = 'OBS Virtual Camera';
+                deviceType.className = 'device-type obs-type';
+                this.deviceInfo.className = 'device-info obs-active';
+                Utils.updateStatus('cameraSourceStatus', 'OBS Virtual Camera', 'obs-source');
+            } else {
+                deviceTypeIcon.textContent = '📷';
+                deviceName.textContent = selectedDeviceInfo.label.replace('📷 ', '');
+                deviceType.textContent = 'Standard Camera';
+                deviceType.className = 'device-type';
+                this.deviceInfo.className = 'device-info';
+                Utils.updateStatus('cameraSourceStatus', 'Standard Webcam', 'standard-source');
+            }
+            
+            // Show device info
+            this.deviceInfo.classList.remove('hidden');
+        }
+    }
+    
+    // NEW: Update switch button state
+    updateSwitchButton() {
+        if (!this.switchCameraBtn) return;
+        
+        const hasSelectedDevice = !!Utils.getSelectedDeviceInfo('cameraDeviceSelect');
+        const isDifferentDevice = this.currentDeviceId !== this.deviceSelector.value;
+        
+        // Enable switch button if camera is active and different device is selected
+        this.switchCameraBtn.disabled = !(this.mediaStream && hasSelectedDevice && isDifferentDevice);
+        
+        // Update button text based on state
+        if (this.isDeviceSwitching) {
+            this.switchCameraBtn.textContent = 'Switching...';
+        } else if (this.currentDeviceInfo?.isOBS) {
+            this.switchCameraBtn.textContent = 'Switch to OBS';
+        } else {
+            this.switchCameraBtn.textContent = 'Switch Camera';
+        }
+    }
+    
+    // NEW: Switch to selected device
+    async switchToSelectedDevice() {
+        if (this.isDeviceSwitching) {
+            Utils.log('Device switch already in progress', 'warn');
+            return;
+        }
+        
+        const selectedDeviceInfo = Utils.getSelectedDeviceInfo('cameraDeviceSelect');
+        if (!selectedDeviceInfo) {
+            Utils.showNotification('Please select a camera device', 'warning');
+            return;
+        }
+        
+        if (selectedDeviceInfo.deviceId === this.currentDeviceId) {
+            Utils.showNotification('Selected device is already active', 'info');
+            return;
+        }
+        
+        try {
+            this.isDeviceSwitching = true;
+            this.updateSwitchButton();
+            
+            Utils.log(`Switching to device: ${selectedDeviceInfo.label}`);
+            Utils.showStatusMessage('statusMessage', `Switching to ${selectedDeviceInfo.label}...`, 'info');
+            
+            // Add switching animation
+            this.video.parentElement.classList.add('switching');
+            
+            // Stop current stream
+            if (this.mediaStream) {
+                this.stopVideoStreaming();
+                this.mediaStream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Start with new device
+            await this.startCameraWithDevice(selectedDeviceInfo);
+            
+            Utils.hideStatusMessage('statusMessage');
+            Utils.showNotification(`Switched to ${selectedDeviceInfo.label}`, 'success');
+            
+        } catch (error) {
+            Utils.log('Error switching camera: ' + error.message, 'error');
+            this.handleCameraError(error);
+        } finally {
+            this.isDeviceSwitching = false;
+            this.updateSwitchButton();
+            
+            // Remove switching animation
+            setTimeout(() => {
+                this.video.parentElement.classList.remove('switching');
+            }, 500);
+        }
+    }
+    
+    async startCamera() {
+        const selectedDeviceInfo = Utils.getSelectedDeviceInfo('cameraDeviceSelect');
+        
+        if (selectedDeviceInfo) {
+            await this.startCameraWithDevice(selectedDeviceInfo);
+        } else {
+            // Fallback to default camera
+            await this.startCameraWithDevice({ deviceId: 'default', label: 'Default Camera', isOBS: false });
+        }
+    }
+    
+    // Enhanced camera start with device selection
+    async startCameraWithDevice(deviceInfo) {
+        try {
+            Utils.log(`Starting camera with device: ${deviceInfo.label}`);
+            Utils.showStatusMessage('statusMessage', `Starting ${deviceInfo.label}...`, 'info');
+            
+            // Get appropriate constraints for the device
+            const constraints = Utils.getConstraintsForDevice(deviceInfo.deviceId, deviceInfo);
             
             // Request camera access
             this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -84,16 +301,33 @@ class StudentApp {
                 this.video.addEventListener('loadedmetadata', resolve, { once: true });
             });
             
+            // Update current device tracking
+            this.currentDeviceId = deviceInfo.deviceId;
+            this.currentDeviceInfo = deviceInfo;
+            
             // Update UI
             this.updateCameraUI(true);
             this.hideVideoOverlay();
+            this.updateSwitchButton();
             
             // Start streaming
             this.startVideoStreaming();
             
-            Utils.log(`Camera started: ${this.video.videoWidth}x${this.video.videoHeight}`);
+            // Log device-specific information
+            const videoTrack = this.mediaStream.getVideoTracks()[0];
+            const settings = videoTrack.getSettings();
+            
+            Utils.log(`Camera started: ${settings.width}x${settings.height} @ ${settings.frameRate}fps`);
+            Utils.log(`Device: ${deviceInfo.label} (${deviceInfo.isOBS ? 'OBS' : 'Standard'})`);
+            
             Utils.hideStatusMessage('statusMessage');
-            Utils.showNotification('Camera started successfully', 'success');
+            
+            // Show success notification with device-specific message
+            const successMessage = deviceInfo.isOBS 
+                ? `OBS Virtual Camera started successfully (${settings.width}x${settings.height})`
+                : `Camera started successfully (${settings.width}x${settings.height})`;
+            
+            Utils.showNotification(successMessage, 'success');
             
         } catch (error) {
             Utils.log('Camera error: ' + error.message, 'error');
@@ -118,11 +352,16 @@ class StudentApp {
         // Clear video source
         this.video.srcObject = null;
         
+        // Reset device tracking
+        this.currentDeviceId = null;
+        
         // Update UI
         this.updateCameraUI(false);
         this.showVideoOverlay();
+        this.updateSwitchButton();
         
         Utils.updateStatus('cameraStatusText', 'Not started');
+        Utils.updateStatus('cameraSourceStatus', 'Not selected');
         Utils.showNotification('Camera stopped', 'info');
     }
     
@@ -130,19 +369,27 @@ class StudentApp {
         if (this.isStreaming) return;
         
         this.isStreaming = true;
-        const interval = 1000 / this.frameRate; // Convert to milliseconds
+        
+        // Adjust frame rate for OBS (can handle higher rates)
+        const frameRate = this.currentDeviceInfo?.isOBS ? 15 : 10;
+        const interval = 1000 / frameRate;
         
         this.streamingInterval = setInterval(() => {
             this.captureAndSendFrame();
         }, interval);
         
         Utils.updateStatus('streamingStatus', 'Streaming');
-        Utils.updateStatus('cameraStatusText', 'Active - Streaming');
+        
+        // Update status with device-specific info
+        const statusText = this.currentDeviceInfo?.isOBS 
+            ? 'Active - Streaming (OBS)'
+            : 'Active - Streaming';
+        Utils.updateStatus('cameraStatusText', statusText);
         
         // Dispatch camera status change event
         this.dispatchCameraStatusEvent(true);
         
-        Utils.log(`Started video streaming at ${this.frameRate} FPS`);
+        Utils.log(`Started video streaming at ${frameRate} FPS (${this.currentDeviceInfo?.isOBS ? 'OBS' : 'Standard'})`);
     }
     
     stopVideoStreaming() {
@@ -190,17 +437,23 @@ class StudentApp {
             // Draw current video frame to canvas
             this.context.drawImage(this.video, 0, 0);
             
-            // Convert to data URL with compression
-            const frameData = Utils.canvasToDataURL(this.canvas, 0.7, 200); // 200KB max
+            // Use different quality settings for OBS vs standard cameras
+            const quality = this.currentDeviceInfo?.isOBS ? 0.8 : 0.7;
+            const maxSize = this.currentDeviceInfo?.isOBS ? 300 : 200; // KB
             
-            // Prepare frame data
+            // Convert to data URL with compression
+            const frameData = Utils.canvasToDataURL(this.canvas, quality, maxSize);
+            
+            // Prepare frame data with device info
             const videoFrame = {
                 dataUrl: frameData.dataUrl,
                 width: this.canvas.width,
                 height: this.canvas.height,
                 sizeKB: frameData.sizeKB,
                 quality: frameData.quality,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                deviceType: this.currentDeviceInfo?.isOBS ? 'obs' : 'standard',
+                deviceLabel: this.currentDeviceInfo?.label || 'Unknown'
             };
             
             // Dispatch event for WebSocket to send
@@ -217,12 +470,21 @@ class StudentApp {
             this.stopCameraBtn.disabled = false;
             this.startCameraBtn.textContent = 'Camera Active';
             this.cameraStatus.textContent = 'Camera Active';
+            
+            // Disable device selector when camera is active
+            this.deviceSelector.disabled = true;
         } else {
             this.startCameraBtn.disabled = false;
             this.stopCameraBtn.disabled = true;
             this.startCameraBtn.textContent = 'Start Camera';
             this.cameraStatus.textContent = 'Camera Off';
+            
+            // Re-enable device selector when camera is off
+            this.deviceSelector.disabled = false;
         }
+        
+        // Update switch button
+        this.updateSwitchButton();
     }
     
     showVideoOverlay() {
@@ -237,6 +499,17 @@ class StudentApp {
         }
     }
     
+    // NEW: Handle device selection errors
+    handleDeviceSelectionError() {
+        this.deviceSelector.innerHTML = '<option value="">Device access failed</option>';
+        this.deviceSelector.disabled = true;
+        this.refreshDevicesBtn.disabled = true;
+        
+        Utils.showStatusMessage('statusMessage', 
+            'Unable to access camera devices. Please check permissions and try refreshing.', 
+            'warning');
+    }
+    
     handleCameraError(error) {
         let errorMessage = 'Failed to access camera';
         
@@ -245,16 +518,18 @@ class StudentApp {
                 errorMessage = 'Camera access denied. Please allow camera permissions and refresh the page.';
                 break;
             case 'NotFoundError':
-                errorMessage = 'No camera found on this device.';
+                errorMessage = 'Selected camera not found. It may have been disconnected.';
+                // Re-populate device list in case device was disconnected
+                this.refreshDeviceList();
                 break;
             case 'NotSupportedError':
-                errorMessage = 'Camera not supported in this browser.';
+                errorMessage = 'Selected camera not supported in this browser.';
                 break;
             case 'NotReadableError':
                 errorMessage = 'Camera is already in use by another application.';
                 break;
             case 'OverconstrainedError':
-                errorMessage = 'Camera constraints could not be satisfied.';
+                errorMessage = 'Camera settings could not be satisfied. Try a different camera.';
                 break;
             default:
                 errorMessage += ': ' + error.message;
@@ -277,7 +552,11 @@ class StudentApp {
     
     dispatchCameraStatusEvent(isActive) {
         const event = new CustomEvent('cameraStatusChanged', {
-            detail: { isActive: isActive }
+            detail: { 
+                isActive: isActive,
+                deviceType: this.currentDeviceInfo?.isOBS ? 'obs' : 'standard',
+                deviceLabel: this.currentDeviceInfo?.label
+            }
         });
         document.dispatchEvent(event);
     }
@@ -288,14 +567,18 @@ class StudentApp {
         window.studentWebSocket.disconnect();
     }
     
-    // Get current state
+    // Enhanced state information with device details
     getState() {
         return {
             hasCamera: !!this.mediaStream,
             isStreaming: this.isStreaming,
             videoWidth: this.video.videoWidth || 0,
             videoHeight: this.video.videoHeight || 0,
-            frameRate: this.frameRate
+            frameRate: this.frameRate,
+            currentDeviceId: this.currentDeviceId,
+            currentDeviceInfo: this.currentDeviceInfo,
+            availableDevices: this.availableDevices.length,
+            isDeviceSwitching: this.isDeviceSwitching
         };
     }
 }
@@ -303,5 +586,5 @@ class StudentApp {
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.studentApp = new StudentApp();
-    Utils.log('Student app loaded and initialized');
+    Utils.log('Enhanced Student app loaded and initialized with device selection');
 });

@@ -24,6 +24,20 @@
         <main class="student-content">
             <section class="camera-section">
                 <h2>Your Camera View</h2>
+                
+                <!-- NEW: Camera Device Selection -->
+                <div class="device-selection">
+                    <label for="cameraDeviceSelect" class="device-label">
+                        📹 Camera Source:
+                    </label>
+                    <select id="cameraDeviceSelect" class="device-selector" disabled>
+                        <option value="">Loading cameras...</option>
+                    </select>
+                    <button id="refreshDevicesBtn" class="btn btn-secondary" title="Refresh camera list">
+                        🔄
+                    </button>
+                </div>
+                
                 <div class="video-container">
                     <video id="studentVideo" autoplay muted playsinline></video>
                     <div class="video-overlay">
@@ -34,6 +48,18 @@
                 <div class="camera-controls">
                     <button id="startCameraBtn" class="btn btn-primary">Start Camera</button>
                     <button id="stopCameraBtn" class="btn btn-danger" disabled>Stop Camera</button>
+                    <button id="switchCameraBtn" class="btn btn-secondary" disabled>Switch Camera</button>
+                </div>
+                
+                <!-- NEW: Device Information Display -->
+                <div id="deviceInfo" class="device-info hidden">
+                    <div class="device-details">
+                        <span class="device-type-icon">📷</span>
+                        <div class="device-text">
+                            <div class="device-name">No camera selected</div>
+                            <div class="device-type">Standard Camera</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="statusMessage" class="status-message"></div>
@@ -47,6 +73,8 @@
                         <li>Ensure your face is clearly visible</li>
                         <li>Remain in view of the camera</li>
                         <li>No other people should be in the room</li>
+                        <!-- NEW: OBS-specific instruction -->
+                        <li>If using OBS, ensure your scene shows only your face</li>
                     </ul>
                 </div>
                 
@@ -56,6 +84,35 @@
                         <p>Server: <span id="serverStatus">Checking...</span></p>
                         <p>Camera: <span id="cameraStatusText">Not started</span></p>
                         <p>Streaming: <span id="streamingStatus">Not streaming</span></p>
+                        <!-- NEW: Camera source info -->
+                        <p>Source: <span id="cameraSourceStatus">Not selected</span></p>
+                    </div>
+                </div>
+
+                <!-- NEW: Camera Tips Card -->
+                <div class="info-card camera-tips">
+                    <h3>Camera Setup Tips</h3>
+                    <div class="tips-content">
+                        <div class="tip-item">
+                            <span class="tip-icon">📷</span>
+                            <span class="tip-text">Standard webcam works for basic monitoring</span>
+                        </div>
+                        <div class="tip-item obs-tip">
+                            <span class="tip-icon">📹</span>
+                            <div class="tip-text">
+                                <strong>OBS Virtual Camera:</strong>
+                                <ul>
+                                    <li>Better video quality and control</li>
+                                    <li>Can customize your video scene</li>
+                                    <li>Start OBS and enable "Virtual Camera"</li>
+                                    <li>Select "OBS Virtual Camera" from dropdown above</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <span class="tip-icon">⚠️</span>
+                            <span class="tip-text">If camera doesn't work, try refreshing devices or restarting browser</span>
+                        </div>
                     </div>
                 </div>
             </section>
