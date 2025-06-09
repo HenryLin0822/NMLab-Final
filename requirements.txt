@@ -17,3 +17,6 @@ Pillow>=10.0.0
 # Common dependencies
 requests==2.31.0
 python-dateutil==2.8.2
+
+face_recognition
+pywin32
