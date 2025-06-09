@@ -436,7 +436,7 @@ class TeacherApp {
         this.setupDetailViewActivityTracking();
         
         // Create AI detection controls
-        //this.createAIDetectionControls();
+        this.createAIDetectionControls();
         
         // Initialize activity log
         this.addActivity('Teacher dashboard initialized', 'info');

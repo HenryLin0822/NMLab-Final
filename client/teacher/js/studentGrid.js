@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 /*
->>>>>>> 79b87c5 (add ai detection)
 // Enhanced Student Grid Manager with Gaze Tracking and Detail View
 class StudentGrid {
     constructor() {

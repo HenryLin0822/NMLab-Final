@@ -52,7 +52,7 @@
                     <span class="checkbox-label">Every 30s</span>
                 </div>
                 
-                <!-- AI Detection Controls -->
+                <!-- NEW: AI Detection Controls -->
                 <div class="control-group ai-detection-controls">
                     <label>AI Detection:</label>
                     <button id="aiDetectionToggle" class="btn btn-secondary ai-detection-btn">
@@ -64,7 +64,7 @@
                     <button id="clearAllBtn" class="btn btn-danger btn-small">Clear All Streams</button>
                 </div>
                 
-                <!-- Export Controls -->
+                <!-- NEW: Export Controls -->
                 <div class="control-group export-controls">
                     <label>Export Data:</label>
                     <button id="exportLogBtn" class="btn btn-secondary btn-small" onclick="window.teacherApp.exportActivityLog()">
@@ -165,13 +165,13 @@
             <div class="activity-panel">
                 <h3>System Status & Activity</h3>
                 
-                <!-- AI Detection Statistics Section (ONLY ONE!) -->
+                <!-- NEW: AI Detection Statistics Section -->
                 <div class="ai-stats-section">
                     <h4>AI Detection Status</h4>
                     <div id="aiStatsContent" class="ai-stats-content">
                         <div class="stat-row">
                             <span class="stat-label">Real Persons:</span>
-                            <span id="aiRealCount" class="stat-value good">0</span>
+                            <span id="aiRealCount" class="stat-value">0</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">AI Generated:</span>
@@ -254,11 +254,7 @@
                         </div>
                         
                         <div class="gaze-history">
-<<<<<<< HEAD
-                            <h4>Recent Activity</h4>
-=======
                             <h4>Recent Gaze Activity</h4>
->>>>>>> 79b87c5 (add ai detection)
                             <div id="detailGazeHistory" class="gaze-history-list">
                                 <!-- Gaze history items will be populated here -->
                             </div>
@@ -266,12 +262,7 @@
                     </div>
                 </div>
                 
-<<<<<<< HEAD
-                <!-- Alerts -->
-                <div class="detail-card">
-                    <h3>Alerts</h3>
-=======
-                <!-- AI Detection Info -->
+                <!-- NEW: AI Detection Info -->
                 <div class="detail-card">
                     <h3>AI Detection</h3>
                     <div id="detailAIInfo" class="ai-detail-info">
@@ -296,7 +287,6 @@
                 <!-- Alerts -->
                 <div class="detail-card">
                     <h3>Active Alerts</h3>
->>>>>>> 79b87c5 (add ai detection)
                     <div id="detailAlerts" class="alerts-container">
                         <div class="no-alerts">No active alerts</div>
                     </div>
@@ -304,11 +294,7 @@
                 
                 <!-- Other Students Alerts -->
                 <div class="detail-card">
-<<<<<<< HEAD
-                    <h3>Other Students</h3>
-=======
                     <h3>Other Students Activity</h3>
->>>>>>> 79b87c5 (add ai detection)
                     <div id="otherStudentsAlerts" class="other-alerts-container">
                         <div class="no-alerts">No alerts from other students</div>
                     </div>
@@ -317,9 +303,7 @@
         </div>
     </div>
 
-<<<<<<< HEAD
-=======
-    <!-- Service Status Indicators -->
+    <!-- NEW: Service Status Indicators -->
     <div class="service-status-bar">
         <div class="service-status-item">
             <span class="service-label">Gaze Tracking:</span>
@@ -331,7 +315,7 @@
         </div>
     </div>
 
-    <!-- Keyboard Shortcuts Help -->
+    <!-- NEW: Keyboard Shortcuts Help -->
     <div id="shortcutsHelp" class="shortcuts-help hidden">
         <div class="shortcuts-content">
             <h4>Keyboard Shortcuts</h4>
@@ -365,12 +349,11 @@
         </div>
     </div>
 
-    <!-- Help Button -->
+    <!-- NEW: Help Button -->
     <button id="helpBtn" class="help-button" onclick="toggleShortcutsHelp()" title="Keyboard Shortcuts">
         ?
     </button>
 
->>>>>>> 79b87c5 (add ai detection)
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="../shared/js/utils.js"></script>
@@ -378,7 +361,7 @@
     <script src="js/studentGrid.js"></script>
     <script src="js/teacherApp.js"></script>
     
-    <!-- Additional UI Helper Scripts -->
+    <!-- NEW: Additional UI Helper Scripts -->
     <script>
         // Service status indicator updates
         function updateServiceStatus() {
