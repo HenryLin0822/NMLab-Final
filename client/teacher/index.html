@@ -25,6 +25,11 @@
                         <span class="label">Active Streams:</span>
                         <span id="activeStreams">0</span>
                     </span>
+                    <!-- Face Recognition Status Integration -->
+                    <span class="status-item">
+                        <span class="label">Face Verified:</span>
+                        <span id="faceVerifiedCount">0</span>
+                    </span>
                 </div>
                 <div class="control-buttons">
                     <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
@@ -52,13 +57,34 @@
                     <span class="checkbox-label">Every 30s</span>
                 </div>
                 
-                
-                
                 <div class="control-group">
                     <button id="clearAllBtn" class="btn btn-danger btn-small">Clear All Streams</button>
                 </div>
                 
-                <!-- NEW: Export Controls -->
+                <!-- Face Recognition Stats Panel -->
+                <div class="control-group face-stats-panel">
+                    <h4>👤 Identity Verification</h4>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Registered:</span>
+                            <span id="faceRegisteredCount" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Verified:</span>
+                            <span id="faceMatchCount" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Mismatches:</span>
+                            <span id="faceMismatchCount" class="stat-value danger">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Alerts:</span>
+                            <span id="faceAlertCount" class="stat-value danger">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Export Controls -->
                 <div class="control-group export-controls">
                     <label>Export Data:</label>
                     <button id="exportLogBtn" class="btn btn-secondary btn-small" onclick="window.teacherApp.exportActivityLog()">
@@ -66,6 +92,9 @@
                     </button>
                     <button id="exportAIReportBtn" class="btn btn-secondary btn-small" onclick="window.teacherApp.generateAIDetectionReport()">
                         Export AI Report
+                    </button>
+                    <button id="exportFaceReportBtn" class="btn btn-secondary btn-small" onclick="window.teacherWebSocket.exportFaceRecognitionReport()">
+                        Export Face Report
                     </button>
                 </div>
             </div>
@@ -156,14 +185,57 @@
                 </div>
             </div>
 
+
+
             <div class="activity-panel">
                 <h3>System Status & Activity</h3>
                 
+                <!-- Enhanced Service Status Panel -->
+                <div class="service-status-section">
+                    <h4>Service Status</h4>
+                    <div class="service-indicators">
+                        <div class="service-item">
+                            <span class="service-icon">👁️</span>
+                            <span class="service-label">Gaze Tracking</span>
+                            <span id="gazeServiceStatus" class="service-status status-connecting">🟡 Connecting...</span>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">🤖</span>
+                            <span class="service-label">AI Detection</span>
+                            <span id="aiServiceStatus" class="service-status status-connecting">🟡 Connecting...</span>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">👤</span>
+                            <span class="service-label">Face Recognition</span>
+                            <span id="faceServiceStatus" class="service-status status-connecting">🟡 Connecting...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: Alerts Center -->
+                <div class="alerts-center">
+                    <h4>Active Alerts</h4>
+                    <div class="alert-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="gaze">Gaze</button>
+                        <button class="filter-btn" data-filter="ai">AI</button>
+                        <button class="filter-btn" data-filter="face">Face</button>
+                    </div>
+                    <div id="alertsList" class="alerts-list">
+                        <p class="no-alerts">No active alerts</p>
+                    </div>
+                    <div class="alert-controls">
+                        <button id="clearAlertsBtn" class="btn btn-secondary btn-small">Clear All Alerts</button>
+                    </div>
+                </div>
                 
-                
-                <div id="activityLog" class="activity-log">
-                    <div class="activity-item">
-                        <span class="timestamp">Ready to monitor students...</span>
+                <!-- Activity Log Section -->
+                <div class="activity-log-section">
+                    <h4>Activity Log</h4>
+                    <div id="activityLog" class="activity-log">
+                        <div class="activity-item">
+                            <span class="timestamp">Ready to monitor students...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -206,6 +278,10 @@
                             <span class="label">Last Frame:</span>
                             <span id="detailLastFrame">Just now</span>
                         </div>
+                        <div class="status-item">
+                            <span class="label">Face Registered:</span>
+                            <span id="detailFaceRegistered">Unknown</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -231,7 +307,7 @@
                     </div>
                 </div>
                 
-                <!-- NEW: AI Detection Info -->
+                <!-- AI Detection Info -->
                 <div class="detail-card">
                     <h3>AI Detection</h3>
                     <div id="detailAIInfo" class="ai-detail-info">
@@ -248,6 +324,28 @@
                             <h4>Recent AI Detections</h4>
                             <div id="detailAIHistory" class="ai-history-list">
                                 <!-- AI detection history items will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Face Recognition Info -->
+                <div class="detail-card">
+                    <h3>Face Recognition</h3>
+                    <div id="detailFaceInfo" class="face-detail-info">
+                        <div class="current-face">
+                            <div class="face-verification-large" id="detailFaceVerification">
+                                👤 Waiting for data...
+                            </div>
+                            <div class="face-confidence" id="detailFaceConfidence">
+                                Confidence: -
+                            </div>
+                        </div>
+                        
+                        <div class="face-history">
+                            <h4>Recent Identity Verifications</h4>
+                            <div id="detailFaceHistory" class="face-history-list">
+                                <!-- Face recognition history items will be populated here -->
                             </div>
                         </div>
                     </div>
@@ -272,19 +370,27 @@
         </div>
     </div>
 
-    <!-- NEW: Service Status Indicators -->
-    <div class="service-status-bar">
-        <div class="service-status-item">
-            <span class="service-label">Gaze Tracking:</span>
-            <span id="gazeServiceStatus" class="service-status status-connecting">🟡 Connecting...</span>
-        </div>
-        <div class="service-status-item">
-            <span class="service-label">AI Detection:</span>
-            <span id="aiServiceStatus" class="service-status status-connecting">🟡 Connecting...</span>
+    <!-- Face Recognition Alert Modal -->
+    <div id="faceAlertModal" class="alert-modal hidden">
+        <div class="alert-modal-content">
+            <div class="alert-modal-header">
+                <h3>🚨 Identity Verification Alert</h3>
+                <button id="closeFaceAlertBtn" class="btn btn-small">✕</button>
+            </div>
+            <div class="alert-modal-body">
+                <div id="faceAlertDetails" class="alert-details">
+                    <!-- Alert details will be populated dynamically -->
+                </div>
+                <div class="alert-actions">
+                    <button id="viewStudentBtn" class="btn btn-primary">👁️ View Student</button>
+                    <button id="markResolvedBtn" class="btn btn-success">✅ Mark Resolved</button>
+                    <button id="dismissAlertBtn" class="btn btn-secondary">Dismiss</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- NEW: Keyboard Shortcuts Help -->
+    <!-- Keyboard Shortcuts Help -->
     <div id="shortcutsHelp" class="shortcuts-help hidden">
         <div class="shortcuts-content">
             <h4>Keyboard Shortcuts</h4>
@@ -318,7 +424,7 @@
         </div>
     </div>
 
-    <!-- NEW: Help Button -->
+    <!-- Help Button -->
     <button id="helpBtn" class="help-button" onclick="toggleShortcutsHelp()" title="Keyboard Shortcuts">
         ?
     </button>
@@ -328,9 +434,10 @@
     <script src="../shared/js/utils.js"></script>
     <script src="js/teacherWebSocket.js"></script>
     <script src="js/studentGrid.js"></script>
+    <script src="js/alertManager.js"></script>
     <script src="js/teacherApp.js"></script>
     
-    <!-- NEW: Additional UI Helper Scripts -->
+    <!-- Additional UI Helper Scripts -->
     <script>
         // Service status indicator updates
         function updateServiceStatus() {
@@ -339,6 +446,7 @@
                 .then(data => {
                     const gazeStatus = document.getElementById('gazeServiceStatus');
                     const aiStatus = document.getElementById('aiServiceStatus');
+                    const faceStatus = document.getElementById('faceServiceStatus');
                     
                     if (gazeStatus) {
                         gazeStatus.className = `service-status ${data.gaze_service ? 'status-connected' : 'status-disconnected'}`;
@@ -348,6 +456,11 @@
                     if (aiStatus) {
                         aiStatus.className = `service-status ${data.ai_detection_service ? 'status-connected' : 'status-disconnected'}`;
                         aiStatus.textContent = data.ai_detection_service ? '🟢 Connected' : '🔴 Disconnected';
+                    }
+                    
+                    if (faceStatus) {
+                        faceStatus.className = `service-status ${data.face_recognition_service ? 'status-connected' : 'status-disconnected'}`;
+                        faceStatus.textContent = data.face_recognition_service ? '🟢 Connected' : '🔴 Disconnected';
                     }
                 })
                 .catch(error => {
@@ -389,6 +502,7 @@
         console.log('🎓 Exam Monitoring System - Teacher Dashboard');
         console.log('👀 Gaze Tracking: Enabled');
         console.log('🤖 AI Detection: Enabled');
+        console.log('👤 Face Recognition: Enabled');
         console.log('⌨️  Press F1 for keyboard shortcuts');
     </script>
 </body>

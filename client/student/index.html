@@ -14,6 +14,8 @@
             <div class="status-bar">
                 <div class="student-info">
                     <span id="studentName">Connecting...</span>
+                    <!-- Face registration status badge - minimal addition -->
+                    <span id="faceRegistrationBadge" class="face-badge hidden">👤 Not Verified</span>
                 </div>
                 <div class="connection-status">
                     <span id="connectionStatus" class="status-disconnected">Disconnected</span>
@@ -22,10 +24,43 @@
         </header>
 
         <main class="student-content">
+            <!-- Face Registration Section - only shows when needed -->
+            <section class="face-registration-section hidden" id="faceRegistrationSection">
+                <div class="info-card">
+                    <h3>📸 Identity Verification Required</h3>
+                    <p>Please upload a clear photo of yourself for identity verification during the exam.</p>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📷</div>
+                            <div class="upload-text">
+                                <p><strong>Click to upload your photo</strong></p>
+                                <p>or drag and drop an image file</p>
+                                <small>Supported: JPG, PNG, WebP (max 5MB)</small>
+                            </div>
+                        </div>
+                        <input type="file" id="faceImageInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <div class="preview-container hidden" id="previewContainer">
+                        <div class="preview-image-wrapper">
+                            <img id="previewImage" alt="Preview">
+                            <button id="removeImageBtn" class="btn-remove">×</button>
+                        </div>
+                        <div class="preview-actions">
+                            <button id="registerFaceBtn" class="btn btn-primary">Register Face</button>
+                            <button id="retakePhotoBtn" class="btn btn-secondary">Choose Different Photo</button>
+                        </div>
+                    </div>
+                    
+                    <div class="registration-status" id="registrationStatus"></div>
+                </div>
+            </section>
+
             <section class="camera-section">
                 <h2>Your Camera View</h2>
                 
-                <!-- NEW: Camera Device Selection -->
+                <!-- Camera Device Selection -->
                 <div class="device-selection">
                     <label for="cameraDeviceSelect" class="device-label">
                         📹 Camera Source:
@@ -43,6 +78,13 @@
                     <div class="video-overlay">
                         <div id="cameraStatus" class="camera-status">Camera Off</div>
                     </div>
+                    <!-- Face verification overlay - appears when verifying -->
+                    <div class="verification-overlay hidden" id="verificationOverlay">
+                        <div class="verification-status" id="verificationStatus">
+                            <span class="verification-icon">👤</span>
+                            <span class="verification-text">Identity Verified</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="camera-controls">
@@ -51,7 +93,7 @@
                     <button id="switchCameraBtn" class="btn btn-secondary" disabled>Switch Camera</button>
                 </div>
                 
-                <!-- NEW: Device Information Display -->
+                <!-- Device Information Display -->
                 <div id="deviceInfo" class="device-info hidden">
                     <div class="device-details">
                         <span class="device-type-icon">📷</span>
@@ -69,11 +111,11 @@
                 <div class="info-card">
                     <h3>Exam Instructions</h3>
                     <ul>
+                        <li>Complete identity verification before starting the exam</li>
                         <li>Keep your camera on during the entire exam</li>
                         <li>Ensure your face is clearly visible</li>
                         <li>Remain in view of the camera</li>
                         <li>No other people should be in the room</li>
-                        <!-- NEW: OBS-specific instruction -->
                         <li>If using OBS, ensure your scene shows only your face</li>
                     </ul>
                 </div>
@@ -84,12 +126,13 @@
                         <p>Server: <span id="serverStatus">Checking...</span></p>
                         <p>Camera: <span id="cameraStatusText">Not started</span></p>
                         <p>Streaming: <span id="streamingStatus">Not streaming</span></p>
-                        <!-- NEW: Camera source info -->
                         <p>Source: <span id="cameraSourceStatus">Not selected</span></p>
+                        <!-- Face verification status -->
+                        <p>Identity: <span id="identityStatus">Not verified</span></p>
                     </div>
                 </div>
 
-                <!-- NEW: Camera Tips Card -->
+                <!-- Camera Tips Card -->
                 <div class="info-card camera-tips">
                     <h3>Camera Setup Tips</h3>
                     <div class="tips-content">
@@ -110,6 +153,10 @@
                             </div>
                         </div>
                         <div class="tip-item">
+                            <span class="tip-icon">👤</span>
+                            <span class="tip-text">Face verification ensures exam security and prevents identity fraud</span>
+                        </div>
+                        <div class="tip-item">
                             <span class="tip-icon">⚠️</span>
                             <span class="tip-text">If camera doesn't work, try refreshing devices or restarting browser</span>
                         </div>
@@ -123,6 +170,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="../shared/js/utils.js"></script>
     <script src="js/studentWebSocket.js"></script>
+    <script src="js/faceRegistration.js"></script>
     <script src="js/studentApp.js"></script>
 </body>
 </html>

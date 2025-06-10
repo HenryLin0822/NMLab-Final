@@ -1,4 +1,4 @@
-// Enhanced Student Application with Device Selection Support
+// Enhanced Student Application with Device Selection and Face Recognition Support
 class StudentApp {
     constructor() {
         this.video = document.getElementById('studentVideo');
@@ -8,7 +8,7 @@ class StudentApp {
         this.cameraStatus = document.getElementById('cameraStatus');
         this.videoOverlay = document.querySelector('.video-overlay');
         
-        // NEW: Device selection elements
+        // Device selection elements
         this.deviceSelector = document.getElementById('cameraDeviceSelect');
         this.refreshDevicesBtn = document.getElementById('refreshDevicesBtn');
         this.deviceInfo = document.getElementById('deviceInfo');
@@ -21,11 +21,15 @@ class StudentApp {
         this.canvas = document.createElement('canvas');
         this.context = this.canvas.getContext('2d');
         
-        // NEW: Device management properties
+        // Device management properties
         this.availableDevices = [];
         this.currentDeviceId = null;
         this.currentDeviceInfo = null;
         this.isDeviceSwitching = false;
+        
+        // Face recognition state
+        this.faceRecognitionEnabled = false;
+        this.isFaceRegistered = false;
         
         this.initialize();
     }
@@ -58,8 +62,9 @@ class StudentApp {
         Utils.updateStatus('cameraStatusText', 'Not started');
         Utils.updateStatus('streamingStatus', 'Not streaming');
         Utils.updateStatus('cameraSourceStatus', 'Not selected');
+        Utils.updateStatus('identityStatus', 'Not verified');
         
-        Utils.log('Student app initialized with device selection support');
+        Utils.log('Student app initialized with device selection and face recognition support');
     }
     
     setupEventListeners() {
@@ -68,13 +73,34 @@ class StudentApp {
         this.stopCameraBtn.addEventListener('click', () => this.stopCamera());
         this.switchCameraBtn.addEventListener('click', () => this.switchToSelectedDevice());
         
-        // NEW: Device selection listeners
+        // Device selection listeners
         this.deviceSelector.addEventListener('change', () => this.onDeviceSelectionChanged());
         this.refreshDevicesBtn.addEventListener('click', () => this.refreshDeviceList());
         
         // Listen for student assignment
         document.addEventListener('studentAssigned', (event) => {
             Utils.log(`Student assigned: ${event.detail.name}`);
+            
+            // Store face recognition availability
+            this.faceRecognitionEnabled = event.detail.faceRecognitionEnabled || false;
+            Utils.log(`Face recognition: ${this.faceRecognitionEnabled ? 'Enabled' : 'Disabled'}`);
+            
+            this.updateCameraButtonStates();
+        });
+        
+        // Listen for face registration completion
+        document.addEventListener('faceRegistrationResult', (event) => {
+            if (event.detail.success) {
+                this.isFaceRegistered = true;
+                this.updateCameraButtonStates();
+                Utils.log('Face registration completed - camera can now be started');
+            }
+        });
+        
+        // Listen for face recognition service status
+        document.addEventListener('faceRecognitionServiceStatus', (event) => {
+            this.faceRecognitionEnabled = event.detail.enabled;
+            this.updateCameraButtonStates();
         });
         
         // Page visibility change (pause streaming when tab not visible)
@@ -92,7 +118,7 @@ class StudentApp {
         });
     }
     
-    // NEW: Initialize device selection functionality
+    // Initialize device selection functionality
     async initializeDeviceSelection() {
         try {
             Utils.log('Initializing device selection...');
@@ -117,7 +143,7 @@ class StudentApp {
         }
     }
     
-    // NEW: Handle device selection change
+    // Handle device selection change
     onDeviceSelectionChanged() {
         const selectedDeviceInfo = Utils.getSelectedDeviceInfo('cameraDeviceSelect');
         
@@ -135,7 +161,7 @@ class StudentApp {
         }
     }
     
-    // NEW: Refresh device list
+    // Refresh device list
     async refreshDeviceList() {
         try {
             this.refreshDevicesBtn.disabled = true;
@@ -161,7 +187,7 @@ class StudentApp {
         }
     }
     
-    // NEW: Update device information display
+    // Update device information display
     updateDeviceInfo() {
         const selectedDeviceInfo = Utils.getSelectedDeviceInfo('cameraDeviceSelect');
         
@@ -196,7 +222,7 @@ class StudentApp {
         }
     }
     
-    // NEW: Update switch button state
+    // Update switch button state
     updateSwitchButton() {
         if (!this.switchCameraBtn) return;
         
@@ -216,7 +242,29 @@ class StudentApp {
         }
     }
     
-    // NEW: Switch to selected device
+    // Update camera button states based on face registration requirements
+    updateCameraButtonStates() {
+        if (!this.faceRecognitionEnabled) {
+            // Face recognition disabled - camera can be started normally
+            this.startCameraBtn.disabled = !!this.mediaStream;
+            return;
+        }
+        
+        // Face recognition enabled - check registration status
+        if (!this.isFaceRegistered) {
+            // Face not registered - disable camera start
+            this.startCameraBtn.disabled = true;
+            this.startCameraBtn.textContent = 'Register Face First';
+            this.startCameraBtn.title = 'Please complete face registration before starting camera';
+        } else {
+            // Face registered - enable camera start
+            this.startCameraBtn.disabled = !!this.mediaStream;
+            this.startCameraBtn.textContent = 'Start Camera';
+            this.startCameraBtn.title = '';
+        }
+    }
+    
+    // Switch to selected device
     async switchToSelectedDevice() {
         if (this.isDeviceSwitching) {
             Utils.log('Device switch already in progress', 'warn');
@@ -271,6 +319,13 @@ class StudentApp {
     }
     
     async startCamera() {
+        // Check face registration requirements
+        if (this.faceRecognitionEnabled && !this.isFaceRegistered) {
+            Utils.showNotification('Please complete face registration first', 'warning');
+            Utils.showStatusMessage('statusMessage', 'Face registration required before starting camera', 'warning');
+            return;
+        }
+        
         const selectedDeviceInfo = Utils.getSelectedDeviceInfo('cameraDeviceSelect');
         
         if (selectedDeviceInfo) {
@@ -281,7 +336,7 @@ class StudentApp {
         }
     }
     
-    // Enhanced camera start with device selection
+    // Enhanced camera start with device selection and face registration check
     async startCameraWithDevice(deviceInfo) {
         try {
             Utils.log(`Starting camera with device: ${deviceInfo.label}`);
@@ -329,6 +384,13 @@ class StudentApp {
             
             Utils.showNotification(successMessage, 'success');
             
+            // Update verification step if face recognition is enabled
+            if (this.faceRecognitionEnabled && this.isFaceRegistered) {
+                // Trigger step 2 completion
+                const event = new CustomEvent('cameraStartedForVerification');
+                document.dispatchEvent(event);
+            }
+            
         } catch (error) {
             Utils.log('Camera error: ' + error.message, 'error');
             this.handleCameraError(error);
@@ -362,6 +424,7 @@ class StudentApp {
         
         Utils.updateStatus('cameraStatusText', 'Not started');
         Utils.updateStatus('cameraSourceStatus', 'Not selected');
+        Utils.updateStatus('identityStatus', 'Not verified');
         Utils.showNotification('Camera stopped', 'info');
     }
     
@@ -474,9 +537,8 @@ class StudentApp {
             // Disable device selector when camera is active
             this.deviceSelector.disabled = true;
         } else {
-            this.startCameraBtn.disabled = false;
+            this.updateCameraButtonStates(); // Use the enhanced button state logic
             this.stopCameraBtn.disabled = true;
-            this.startCameraBtn.textContent = 'Start Camera';
             this.cameraStatus.textContent = 'Camera Off';
             
             // Re-enable device selector when camera is off
@@ -499,7 +561,7 @@ class StudentApp {
         }
     }
     
-    // NEW: Handle device selection errors
+    // Handle device selection errors
     handleDeviceSelectionError() {
         this.deviceSelector.innerHTML = '<option value="">Device access failed</option>';
         this.deviceSelector.disabled = true;
@@ -555,7 +617,9 @@ class StudentApp {
             detail: { 
                 isActive: isActive,
                 deviceType: this.currentDeviceInfo?.isOBS ? 'obs' : 'standard',
-                deviceLabel: this.currentDeviceInfo?.label
+                deviceLabel: this.currentDeviceInfo?.label,
+                faceRecognitionEnabled: this.faceRecognitionEnabled,
+                faceRegistered: this.isFaceRegistered
             }
         });
         document.dispatchEvent(event);
@@ -567,7 +631,7 @@ class StudentApp {
         window.studentWebSocket.disconnect();
     }
     
-    // Enhanced state information with device details
+    // Enhanced state information with device details and face recognition
     getState() {
         return {
             hasCamera: !!this.mediaStream,
@@ -578,7 +642,9 @@ class StudentApp {
             currentDeviceId: this.currentDeviceId,
             currentDeviceInfo: this.currentDeviceInfo,
             availableDevices: this.availableDevices.length,
-            isDeviceSwitching: this.isDeviceSwitching
+            isDeviceSwitching: this.isDeviceSwitching,
+            faceRecognitionEnabled: this.faceRecognitionEnabled,
+            isFaceRegistered: this.isFaceRegistered
         };
     }
 }
@@ -586,5 +652,5 @@ class StudentApp {
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.studentApp = new StudentApp();
-    Utils.log('Enhanced Student app loaded and initialized with device selection');
+    Utils.log('Enhanced Student app loaded and initialized with device selection and face recognition');
 });

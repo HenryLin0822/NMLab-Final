@@ -23,7 +23,7 @@
     font-size: 1.4rem;
 }
 
-/* NEW: Device Selection Styling */
+/* Device Selection Styling */
 .device-selection {
     display: flex;
     align-items: center;
@@ -91,7 +91,7 @@
     cursor: not-allowed;
 }
 
-/* NEW: Device Information Display */
+/* Device Information Display */
 .device-info {
     margin-bottom: 1rem;
     padding: 0.75rem 1rem;
@@ -187,6 +187,247 @@
     backdrop-filter: blur(10px);
 }
 
+/* Face Registration Styles - Integrated with original design */
+.face-registration-section {
+    grid-column: 1 / -1; /* Full width */
+    margin-bottom: 1rem;
+    animation: slideDown 0.3s ease-out;
+}
+
+.face-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+.face-badge.registered {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+.face-badge.not-registered {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Upload Area */
+.upload-area {
+    border: 3px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    margin: 1rem 0;
+}
+
+.upload-area:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+}
+
+.upload-area.drag-highlight {
+    border-color: #28a745;
+    background: #f8fff9;
+    transform: scale(1.02);
+}
+
+.upload-content {
+    pointer-events: none;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+.upload-text p {
+    margin: 0.5rem 0;
+    color: #495057;
+}
+
+.upload-text small {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Preview Container */
+.preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.preview-image-wrapper {
+    position: relative;
+    display: inline-block;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.preview-image-wrapper img {
+    max-width: 300px;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    display: block;
+}
+
+.btn-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-remove:hover {
+    background: rgba(220, 53, 69, 1);
+    transform: scale(1.1);
+}
+
+.preview-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Registration Status */
+.registration-status {
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.registration-status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.registration-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.registration-status.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.registration-status.warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* Verification Overlay */
+.verification-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.verification-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    animation: slideInDown 0.5s ease-out;
+}
+
+.verification-status.verified {
+    background: rgba(40, 167, 69, 0.9);
+    color: white;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.verification-status.mismatch {
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    animation: shake 0.5s ease-in-out;
+}
+
+.verification-status.no-face {
+    background: rgba(255, 193, 7, 0.9);
+    color: #212529;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
 /* Enhanced Camera Controls */
 .camera-controls {
     display: flex;
@@ -245,7 +486,7 @@
     box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
 }
 
-/* NEW: Switch Camera Button Specific Styling */
+/* Switch Camera Button Specific Styling */
 #switchCameraBtn {
     background: #17a2b8;
     min-width: 140px;
@@ -318,7 +559,7 @@
     font-size: 0.9rem;
 }
 
-/* NEW: Camera Tips Styling */
+/* Camera Tips Styling */
 .camera-tips {
     border-left: 4px solid #17a2b8;
     background: linear-gradient(135deg, #f8fdff 0%, #e1f5fe 100%);
@@ -441,7 +682,26 @@
     color: #212529;
 }
 
-/* NEW: Camera Source Status */
+/* Identity Status Styling */
+#identityStatus.status-verified {
+    background: #d4edda;
+    color: #155724;
+    font-weight: bold;
+}
+
+#identityStatus.status-warning {
+    background: #fff3cd;
+    color: #856404;
+    font-weight: bold;
+}
+
+#identityStatus.status-error {
+    background: #f8d7da;
+    color: #721c24;
+    font-weight: bold;
+}
+
+/* Camera Source Status */
 #cameraSourceStatus {
     font-family: monospace;
     font-size: 0.85rem;
@@ -470,6 +730,8 @@
     font-size: 1.1rem;
     font-weight: 500;
     color: #333;
+    display: flex;
+    align-items: center;
 }
 
 .connection-status span {
@@ -485,6 +747,10 @@
         grid-template-columns: 1fr;
         gap: 1rem;
         padding: 0.5rem;
+    }
+    
+    .face-registration-section {
+        grid-column: 1;
     }
     
     .device-selection {
@@ -527,6 +793,16 @@
     .tip-icon {
         align-self: flex-start;
     }
+    
+    .preview-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .preview-image-wrapper img {
+        max-width: 250px;
+        max-height: 250px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -549,6 +825,15 @@
     .tip-text li {
         font-size: 0.8rem;
     }
+    
+    .upload-area {
+        padding: 1.5rem;
+    }
+    
+    .preview-image-wrapper img {
+        max-width: 200px;
+        max-height: 200px;
+    }
 }
 
 /* Animation for device switching */
@@ -567,4 +852,20 @@
 .btn:focus {
     outline: 2px solid #007bff;
     outline-offset: 2px;
+}
+
+/* Hidden class */
+.hidden {
+    display: none !important;
+}
+
+/* Loading states */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
 }
